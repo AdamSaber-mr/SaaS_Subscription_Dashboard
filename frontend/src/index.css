@@ -1,0 +1,75 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+::selection {
+  background: color-mix(in oklab, var(--accent, #6e56cf) 22%, transparent);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong, #ddd);
+  border-radius: 8px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-3, #aaa);
+  background-clip: padding-box;
+}
+
+input,
+button,
+select {
+  font-family: inherit;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition-duration: 0.001ms !important;
+    animation-duration: 0.001ms !important;
+  }
+}
+
+/* Entrance animation for staggered content */
+@keyframes dc-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+[data-enter] {
+  animation: dc-enter 0.52s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+/* ApexCharts tooltip overrides — we render fully custom tooltips */
+.apexcharts-tooltip {
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+.apexcharts-tooltip.apexcharts-theme-light,
+.apexcharts-tooltip.apexcharts-theme-dark {
+  box-shadow: none !important;
+  background: transparent !important;
+  border: none !important;
+}
+.apexcharts-xaxistooltip,
+.apexcharts-yaxistooltip {
+  display: none !important;
+}
+.apexcharts-gridline {
+  stroke-opacity: 0.7;
+}
