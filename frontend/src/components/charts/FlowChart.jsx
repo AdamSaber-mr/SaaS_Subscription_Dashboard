@@ -5,18 +5,18 @@ import { usdShort } from '../../lib/format.js'
 // Sankey-style flow: green streams (new + upgrades) merge into a central "Net"
 // node, red streams (downgrades + cancellations) flow out to the right.
 export default function FlowChart({ m, net }) {
-  const { theme, accent } = useDashboard()
+  const { theme, accent, t } = useDashboard()
   const colors = chartColors(theme, accent)
   const isLight = colors.isLight
   const animate = !window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
   const fIn = [
-    { label: 'New customers', v: m.newM },
-    { label: 'Upgrades', v: m.expM },
+    { label: t('dash.newCustomers'), v: m.newM },
+    { label: t('dash.upgrades'), v: m.expM },
   ]
   const fOut = [
-    { label: 'Downgrades', v: m.conM },
-    { label: 'Cancellations', v: m.chuM },
+    { label: t('dash.downgrades'), v: m.conM },
+    { label: t('dash.cancellations'), v: m.chuM },
   ]
   const inSum = m.newM + m.expM
   const outSum = m.conM + m.chuM
@@ -81,7 +81,7 @@ export default function FlowChart({ m, net }) {
         </g>
       ))}
       <rect x={center.x} y={center.y} width={center.w} height={center.h} rx="11" fill={center.surf2} stroke={center.border} />
-      <text x={center.cx} y={center.ty} textAnchor="middle" fontSize="10" fontFamily={FONT} fill={center.color} opacity="0.8">Net</text>
+      <text x={center.cx} y={center.ty} textAnchor="middle" fontSize="10" fontFamily={FONT} fill={center.color} opacity="0.8">{t('flow.net')}</text>
       <text x={center.cx} y={center.vy} textAnchor="middle" fontSize="15" fontWeight="700" fontFamily={FONT} fill={center.color}>{center.netStr}</text>
       {nodes.map((nd, i) => (
         <rect key={i} x={nd.x} y={nd.y} width={nd.w} height={nd.h} rx="6" fill={nd.fill} />

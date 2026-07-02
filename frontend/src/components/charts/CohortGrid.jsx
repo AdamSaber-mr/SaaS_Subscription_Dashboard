@@ -1,15 +1,16 @@
 import { useDashboard } from '../../store/DashboardContext.jsx'
+import { trMonths } from '../../lib/i18n.js'
 import InfoTip from '../InfoTip.jsx'
 
 // % of each sign-up cohort still active, by months since signup.
 export default function CohortGrid() {
-  const { metrics } = useDashboard()
+  const { metrics, lang, t } = useDashboard()
   const { labels, sizes, grid } = metrics.cohort
   const nCols = grid[0]?.length || 9
-  const head = Array.from({ length: nCols }, (_, k) => (k === 0 ? 'Size' : 'M' + k))
+  const head = Array.from({ length: nCols }, (_, k) => (k === 0 ? t('cohort.size') : 'M' + k))
 
   const rows = grid.map((row, ri) => ({
-    label: labels[ri],
+    label: trMonths(labels[ri], lang),
     cells: row.map((p, k) => {
       if (p === null) return { label: '', empty: true }
       const size = sizes[ri]
@@ -33,15 +34,15 @@ export default function CohortGrid() {
     >
       <div style={{ marginBottom: '16px' }}>
         <div style={{ display: 'flex', alignItems: 'center', fontSize: '13.5px', fontWeight: 600, color: 'var(--text,#15151b)' }}>
-          Cohort retention
-          <InfoTip text="Group customers by the month they signed up, then track the share still active each month after. Read each row left to right — it usually fades over time." />
+          {t('cohort.title')}
+          <InfoTip text={t('cohort.tip')} />
         </div>
-        <div style={{ fontSize: '11.5px', color: 'var(--text-3,#9a9aa6)', marginTop: '2px' }}>% of each signup cohort still active, by months since signup</div>
+        <div style={{ fontSize: '11.5px', color: 'var(--text-3,#9a9aa6)', marginTop: '2px' }}>{t('cohort.subtitle')}</div>
       </div>
       <div style={{ overflowX: 'auto' }}>
         <div style={{ minWidth: '560px' }}>
           <div style={{ display: 'grid', gridTemplateColumns: gridCols, gap: '4px', marginBottom: '4px' }}>
-            <span style={{ fontSize: '10.5px', color: 'var(--text-3,#9a9aa6)', fontWeight: 500 }}>Cohort</span>
+            <span style={{ fontSize: '10.5px', color: 'var(--text-3,#9a9aa6)', fontWeight: 500 }}>{t('cohort.cohortCol')}</span>
             {head.map((h, i) => (
               <span key={i} style={{ fontSize: '10.5px', color: 'var(--text-3,#9a9aa6)', textAlign: 'center', fontWeight: 500 }}>{h}</span>
             ))}
@@ -75,9 +76,9 @@ export default function CohortGrid() {
             </div>
           ))}
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '14px', fontSize: '10.5px', color: 'var(--text-3,#9a9aa6)' }}>
-            <span>Fewer still active</span>
+            <span>{t('cohort.fewer')}</span>
             <div style={{ flex: 1, maxWidth: '200px', height: '8px', borderRadius: '5px', background: 'linear-gradient(90deg, var(--surface-2), var(--accent))' }} />
-            <span>More still active</span>
+            <span>{t('cohort.more')}</span>
           </div>
         </div>
       </div>

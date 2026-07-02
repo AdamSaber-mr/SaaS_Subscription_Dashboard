@@ -1,67 +1,118 @@
-import Chart from 'react-apexcharts'
+import { useMemo, useState } from 'react'
 import { useDashboard } from '../../store/DashboardContext.jsx'
-import { chartColors, FONT } from '../../lib/theme.js'
-import { usd } from '../../lib/format.js'
+import { usd, usdShort } from '../../lib/format.js'
+import { trMonths } from '../../lib/i18n.js'
+import { useSize, niceScale, smoothPath, ChartTooltip } from './ChartBits.jsx'
 
-// Custom tooltip markup shared by the dashboard charts.
-function tipHtml(label, val, color, c) {
-  return (
-    '<div style="padding:8px 11px;background:' + c.surface + ';border:1px solid ' + c.border +
-    ';border-radius:9px;box-shadow:0 8px 22px rgba(8,8,12,0.16);font-family:' + FONT + ';">' +
-    '<div style="font-size:10.5px;color:' + c.t3 + ';margin-bottom:3px;">' + label + '</div>' +
-    '<div style="display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:' + c.t1 +
-    ';font-variant-numeric:tabular-nums;"><span style="width:8px;height:8px;border-radius:50%;background:' +
-    color + ';"></span>' + val + '</div></div>'
-  )
-}
+const H = 248
+const PAD = { top: 16, right: 52, bottom: 26, left: 44 }
 
+// Hand-built SVG area chart: 2px smooth line over a quiet gradient wash,
+// hairline grid, shaded selected period, endpoint dot + direct label, and a
+// snapping crosshair with a tooltip (the crosshair finds the X — readers aim
+// at a month, never at the 2px line).
 export default function MrrTrendChart() {
-  const { metrics, theme, accent } = useDashboard()
+  const { metrics, accent, lang, t } = useDashboard()
+  const [wrapRef, width] = useSize()
+  const [hover, setHover] = useState(null) // snapped index
+
   const [s, e] = metrics.range
-  const months = metrics.trend.months
-  const monthsLong = metrics.trend.monthsLong
   const series = metrics.trend.mrr
-  const c = chartColors(theme, accent)
+  const months = metrics.trend.months.map((m) => trMonths(m, lang))
+  const monthsLong = metrics.trend.monthsLong.map((m) => trMonths(m, lang))
+  const n = series.length
+  const last = n - 1
 
-  const ann =
-    s !== e
-      ? [{ x: months[s], x2: months[e], fillColor: accent, opacity: 0.08, borderColor: 'transparent' }]
-      : [{ x: months[e], borderColor: accent, strokeDashArray: 0, opacity: 0.5 }]
+  const iw = Math.max(0, width - PAD.left - PAD.right)
+  const ih = H - PAD.top - PAD.bottom
+  const { max, ticks } = useMemo(() => niceScale(Math.max(...series)), [series])
+  const x = (i) => PAD.left + (n > 1 ? (i / (n - 1)) * iw : 0)
+  const y = (v) => PAD.top + ih - (v / max) * ih
 
-  const options = {
-    chart: {
-      type: 'area',
-      height: 248,
-      fontFamily: FONT,
-      toolbar: { show: false },
-      zoom: { enabled: false },
-      animations: { enabled: true, easing: 'easeinout', speed: 850, animateGradually: { enabled: true, delay: 120 }, dynamicAnimation: { enabled: true, speed: 520 } },
-    },
-    colors: [accent],
-    stroke: { curve: 'smooth', width: 3, lineCap: 'round' },
-    fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.32, opacityTo: 0.02, stops: [0, 96] } },
-    dataLabels: { enabled: false },
-    markers: { size: 0, strokeWidth: 0, hover: { size: 5 } },
-    grid: { borderColor: c.grid, strokeDashArray: 0, xaxis: { lines: { show: false } }, yaxis: { lines: { show: true } }, padding: { top: 4, right: 12, bottom: 0, left: 8 } },
-    xaxis: {
-      categories: months,
-      tickAmount: 6,
-      axisBorder: { show: false },
-      axisTicks: { show: false },
-      labels: { rotate: 0, hideOverlappingLabels: true, style: { colors: c.t3, fontSize: '10.5px' } },
-      crosshairs: { show: true, stroke: { color: c.grid, width: 1, dashArray: 3 } },
-      tooltip: { enabled: false },
-    },
-    yaxis: { tickAmount: 4, labels: { style: { colors: c.t3, fontSize: '10.5px' }, formatter: (v) => '$' + (v >= 1000 ? (v / 1000).toFixed(0) + 'k' : Math.round(v)) } },
-    tooltip: { custom: (o) => tipHtml(monthsLong[o.dataPointIndex], usd(series[o.dataPointIndex]), accent, c) },
-    annotations: { xaxis: ann },
+  const pts = series.map((v, i) => [x(i), y(v)])
+  const line = smoothPath(pts)
+  const area = line + ` L${x(last).toFixed(1)},${(PAD.top + ih).toFixed(1)} L${x(0).toFixed(1)},${(PAD.top + ih).toFixed(1)} Z`
+
+  const xLabelStep = Math.ceil(n / 6)
+  const halfBand = n > 1 ? iw / (n - 1) / 2 : 0
+
+  const onMove = (ev) => {
+    const rect = ev.currentTarget.getBoundingClientRect()
+    const px = ev.clientX - rect.left
+    const i = Math.round(((px - PAD.left) / Math.max(1, iw)) * (n - 1))
+    setHover(Math.max(0, Math.min(last, i)))
   }
 
+  if (!width) return <div ref={wrapRef} style={{ height: H + 'px' }} />
+
   return (
-    <div style={{ height: '248px', minHeight: '248px', margin: '0 -8px' }}>
-      <Chart key={theme} type="area" height={248} options={options} series={[{ name: 'MRR', data: series }]} />
+    <div ref={wrapRef} style={{ position: 'relative', height: H + 'px' }}>
+      <svg width={width} height={H} role="img" aria-label={t('dash.trendTitle') + ' — ' + usd(series[last])} style={{ display: 'block' }}>
+        <defs>
+          <linearGradient id="mrr-wash" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={accent} stopOpacity="0.16" />
+            <stop offset="100%" stopColor={accent} stopOpacity="0.01" />
+          </linearGradient>
+        </defs>
+
+        {/* selected period, whisper quiet */}
+        <rect x={x(s) - (s > 0 ? halfBand : 0)} y={PAD.top} width={x(e) - x(s) + halfBand * (s > 0 ? 2 : 1)} height={ih} fill={accent} opacity="0.05" />
+
+        {/* hairline grid + $ ticks */}
+        {ticks.map((tk) => (
+          <g key={tk}>
+            <line x1={PAD.left} x2={PAD.left + iw} y1={y(tk)} y2={y(tk)} stroke="var(--border,#ececef)" strokeWidth="1" />
+            <text x={PAD.left - 8} y={y(tk) + 3.5} textAnchor="end" fontSize="10.5" fill="var(--text-3,#9a9aa6)">
+              {'$' + (tk >= 1000 ? tk / 1000 + 'k' : tk)}
+            </text>
+          </g>
+        ))}
+
+        {/* month labels */}
+        {months.map((m, i) =>
+          i % xLabelStep === 0 ? (
+            <text key={i} x={x(i)} y={H - 8} textAnchor="middle" fontSize="10.5" fill="var(--text-3,#9a9aa6)">
+              {m}
+            </text>
+          ) : null,
+        )}
+
+        {/* wash + line, drawn in on mount */}
+        <path d={area} fill="url(#mrr-wash)" style={{ animation: 'chart-fade .9s ease both' }} />
+        <path d={line} fill="none" stroke={accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" pathLength="1" style={{ strokeDasharray: 1, animation: 'chart-draw 1s cubic-bezier(0.4,0,0.2,1) both' }} />
+
+        {/* crosshair + snapped point */}
+        {hover != null && (
+          <g>
+            <line x1={x(hover)} x2={x(hover)} y1={PAD.top} y2={PAD.top + ih} stroke="var(--border-strong,#e0e0e6)" strokeWidth="1" />
+            <circle cx={x(hover)} cy={y(series[hover])} r="5" fill={accent} stroke="var(--surface,#fff)" strokeWidth="2" />
+          </g>
+        )}
+
+        {/* endpoint dot + direct label */}
+        <circle cx={x(last)} cy={y(series[last])} r="4.5" fill={accent} stroke="var(--surface,#fff)" strokeWidth="2" />
+        <text x={x(last) + 9} y={y(series[last]) + 4} fontSize="11.5" fontWeight="650" fill="var(--text,#15151b)">
+          {usdShort(series[last])}
+        </text>
+
+        {/* hit layer: the whole plot, so the crosshair does the aiming */}
+        <rect x={PAD.left} y={PAD.top} width={iw} height={ih} fill="transparent" onMouseMove={onMove} onMouseLeave={() => setHover(null)} />
+      </svg>
+
+      <ChartTooltip width={width} tip={hover != null ? { x: x(hover), y: y(series[hover]), label: monthsLong[hover], value: usd(series[hover]), color: accent } : null} />
+
+      {/* WCAG twin: the same values as a plain table */}
+      <table className="sr-only">
+        <caption>{t('dash.trendTitle')}</caption>
+        <tbody>
+          {series.map((v, i) => (
+            <tr key={i}>
+              <th scope="row">{monthsLong[i]}</th>
+              <td>{usd(v)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   )
 }
-
-export { tipHtml }
