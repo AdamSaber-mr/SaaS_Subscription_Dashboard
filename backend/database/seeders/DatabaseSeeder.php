@@ -21,7 +21,7 @@ class DatabaseSeeder extends Seeder
         // The default only applies the first time (local dev convenience).
         User::firstOrCreate(
             ['email' => 'ava@northwind.test'],
-            ['name' => 'Ava Mercer', 'password' => env('DEMO_USER_PASSWORD', 'password'), 'team_id' => $team->id],
+            ['name' => 'Ava Mercer', 'password' => env('DEMO_USER_PASSWORD', 'password'), 'team_id' => $team->id, 'is_demo' => true],
         );
         User::firstOrCreate(
             ['email' => 'adamsaber.db@gmail.com'],

@@ -39,6 +39,22 @@ class AuthController extends Controller
         ], 201);
     }
 
+    /**
+     * Issue a token for the read-only demo account — visitors explore the
+     * seeded Northwind tenant without registering. Writes are blocked by
+     * the DenyDemoWrites middleware.
+     */
+    public function demo()
+    {
+        $demo = User::where('is_demo', true)->first();
+        abort_unless($demo, 503, 'Demo account not provisioned');
+
+        return response()->json([
+            'user' => $demo->load('team'),
+            'token' => $demo->createToken('demo')->plainTextToken,
+        ]);
+    }
+
     /** Authenticate and issue a Sanctum token. */
     public function login(Request $request)
     {
