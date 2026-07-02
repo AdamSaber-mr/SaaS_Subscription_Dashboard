@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { api, getToken, setToken, clearToken } from '../lib/api.js'
 import { planRampFor } from '../lib/theme.js'
 import { DEFAULT_LANG, LANGS, makeT } from '../lib/i18n.js'
+import { useMediaQuery } from '../hooks/useMediaQuery.js'
 
 const DashboardContext = createContext(null)
 
@@ -81,6 +82,9 @@ export function DashboardProvider({ children }) {
   const [page, setPage] = useState(1)
   const [subPlanFilter, setSubPlanFilter] = useState('all')
   const [modal, setModal] = useState(null)
+  // On narrow screens the sidebar becomes an overlay drawer.
+  const isMobile = useMediaQuery('(max-width: 900px)')
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const [modalForm, setModalForm] = useState({ name: '', planId: 'growth' })
 
   const accent = '#6E56CF'
@@ -184,9 +188,21 @@ export function DashboardProvider({ children }) {
 
   const refresh = useCallback(() => setRefreshKey((k) => k + 1), [])
 
-  // --- navigation -------------------------------------------------------------
-  const go = useCallback((r) => navigate('/' + r), [navigate])
-  const openCustomer = useCallback((id) => navigate('/customers/' + id), [navigate])
+  // --- navigation (closes the mobile drawer) ----------------------------------
+  const go = useCallback(
+    (r) => {
+      navigate('/' + r)
+      setSidebarOpen(false)
+    },
+    [navigate],
+  )
+  const openCustomer = useCallback(
+    (id) => {
+      navigate('/customers/' + id)
+      setSidebarOpen(false)
+    },
+    [navigate],
+  )
 
   // --- lifecycle actions (API mutations + refetch) ---------------------------
   const closeModal = useCallback(() => setModal(null), [])
@@ -261,7 +277,7 @@ export function DashboardProvider({ children }) {
       // state
       route, period, theme, movementViz, dashLayout, search,
       sortKey, sortDir, statusFilter, page, subPlanFilter, selectedCustomerId,
-      modal, modalForm,
+      modal, modalForm, isMobile, sidebarOpen, setSidebarOpen,
       // setters
       setPeriod, setMovementViz, setDashLayout, setSearch,
       setStatusFilter, setPage, setSubPlanFilter, setModalForm,
@@ -277,7 +293,7 @@ export function DashboardProvider({ children }) {
       lang, setLang, t,
       route, period, theme, movementViz, dashLayout, search,
       sortKey, sortDir, statusFilter, page, subPlanFilter, selectedCustomerId,
-      modal, modalForm,
+      modal, modalForm, isMobile, sidebarOpen,
       setPeriod, setSearch, setStatusFilter, toggleTheme, toggleSort,
       go, openCustomer, doChangePlan, doCancel, doNewSub,
       openNewSub, openChangePlan, openCancel, closeModal,

@@ -82,6 +82,9 @@ export default function Customers() {
       </div>
 
       <div style={{ background: 'var(--surface,#fff)', border: '1px solid var(--border,#ececef)', borderRadius: '16px', boxShadow: 'var(--shadow)', overflow: 'hidden' }}>
+        {/* wide table scrolls inside its own card — the page never scrolls sideways */}
+        <div style={{ overflowX: 'auto' }}>
+        <div style={{ minWidth: '760px' }}>
         <div style={{ display: 'grid', gridTemplateColumns: GRID, gap: '14px', padding: '13px 20px', borderBottom: '1px solid var(--border,#ececef)', background: 'var(--surface-2,#f6f6f8)' }}>
           {COLS.map(([key, label]) => (
             <button
@@ -141,7 +144,9 @@ export default function Customers() {
             )
           })}
         </div>
-        <div style={{ padding: '12px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', fontSize: '11.5px', color: 'var(--text-3,#9a9aa6)' }}>
+        </div>
+        </div>
+        <div style={{ padding: '12px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap', fontSize: '11.5px', color: 'var(--text-3,#9a9aa6)' }}>
           <span>{t('customers.showing', { x: rows.length, y: total })}</span>
           {lastPage > 1 && (
             <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>

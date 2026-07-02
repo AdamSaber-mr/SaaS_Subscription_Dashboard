@@ -56,6 +56,9 @@ export default function Subscriptions() {
       </div>
 
       <div style={{ background: 'var(--surface,#fff)', border: '1px solid var(--border,#ececef)', borderRadius: '16px', boxShadow: 'var(--shadow)', overflow: 'hidden' }}>
+        {/* wide table scrolls inside its own card — the page never scrolls sideways */}
+        <div style={{ overflowX: 'auto' }}>
+        <div style={{ minWidth: '720px' }}>
         <div style={{ display: 'grid', gridTemplateColumns: GRID, gap: '14px', padding: '13px 20px', borderBottom: '1px solid var(--border,#ececef)', background: 'var(--surface-2,#f6f6f8)', fontSize: '11px', fontWeight: 600, color: 'var(--text-2,#6b6b78)', textTransform: 'uppercase', letterSpacing: '.04em' }}>
           <span>{t('subs.colCustomer')}</span>
           <span>{t('subs.colPlan')}</span>
@@ -98,6 +101,8 @@ export default function Subscriptions() {
             </div>
           </div>
         ))}
+        </div>
+        </div>
         <div style={{ padding: '12px 20px', fontSize: '11.5px', color: 'var(--text-3,#9a9aa6)' }}>{t('subs.showing', { x: rows.length, y: total })}</div>
       </div>
     </div>

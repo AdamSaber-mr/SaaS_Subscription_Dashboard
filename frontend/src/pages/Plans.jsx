@@ -107,7 +107,8 @@ export default function Plans() {
         </div>
 
         {/* Per-tier rows: thin bars on a quiet track, values in text ink. */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+        <div style={{ overflowX: 'auto' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', minWidth: '480px' }}>
           {rows.map((p) => (
             <div key={p.id} style={{ display: 'grid', gridTemplateColumns: '110px 1fr 150px', gap: '16px', alignItems: 'center' }}>
               <div>
@@ -123,6 +124,7 @@ export default function Plans() {
               </div>
             </div>
           ))}
+        </div>
         </div>
       </div>
     </div>

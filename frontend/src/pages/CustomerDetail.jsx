@@ -4,7 +4,7 @@ import { statusStyle } from '../lib/badges.js'
 import StatCard from '../components/StatCard.jsx'
 
 export default function CustomerDetail() {
-  const { customerDetail: sel, go, openChangePlan, openCancel, lang, t } = useDashboard()
+  const { customerDetail: sel, go, openChangePlan, openCancel, lang, t, isMobile } = useDashboard()
 
   const EV_LABEL = { new: t('detail.evNew'), expansion: t('detail.evExpansion'), contraction: t('detail.evContraction'), churn: t('detail.evChurn') }
 
@@ -80,7 +80,7 @@ export default function CustomerDetail() {
         ))}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.25fr', gap: '18px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1.25fr', gap: '18px' }}>
         <div style={{ background: 'var(--surface,#fff)', border: '1px solid var(--border,#ececef)', borderRadius: '16px', padding: '20px 22px', boxShadow: 'var(--shadow)' }}>
           <div style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--text,#15151b)', marginBottom: '16px' }}>{t('detail.timeline')}</div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>

@@ -39,7 +39,7 @@ function ChartCard({ title, tip, subtitle, endLabel, growthLabel, children }) {
 }
 
 export default function Dashboard() {
-  const { metrics, period, movementViz, setMovementViz, dashLayout, setDashLayout, t, user, companyName, openNewSub } = useDashboard()
+  const { metrics, period, movementViz, setMovementViz, dashLayout, setDashLayout, t, user, companyName, openNewSub, isMobile } = useDashboard()
   const M = usePeriodMetrics()
   const { newM, expM, conM, chuM, endMRR, endActive, newCust, net, nrr, quick, arpu, ltv, custChurn, revChurn } = M
   const T = metrics.trend
@@ -150,7 +150,7 @@ export default function Dashboard() {
       </div>
 
       {/* CHARTS ROW */}
-      <div data-enter style={{ order: dord.charts, display: 'grid', gridTemplateColumns: analyst ? '1fr 1fr' : '1.6fr 1fr', gap: '16px' }}>
+      <div data-enter style={{ order: dord.charts, display: 'grid', gridTemplateColumns: isMobile ? '1fr' : analyst ? '1fr 1fr' : '1.6fr 1fr', gap: '16px' }}>
         <ChartCard
           title={t('dash.trendTitle')}
           tip={t('dash.trendTip')}
@@ -192,7 +192,7 @@ export default function Dashboard() {
           />
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1.55fr 1fr', gap: '28px', alignItems: 'center' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.55fr 1fr', gap: isMobile ? '18px' : '28px', alignItems: 'center' }}>
           <div>
             {movementViz === 'bars' && <MovementsChart m={m} />}
             {movementViz === 'flow' && <FlowChart m={m} net={net} />}
@@ -211,7 +211,7 @@ export default function Dashboard() {
             )}
           </div>
 
-          <div style={{ borderLeft: '1px solid var(--border,#ececef)', paddingLeft: '26px' }}>
+          <div style={isMobile ? { borderTop: '1px solid var(--border,#ececef)', paddingTop: '16px' } : { borderLeft: '1px solid var(--border,#ececef)', paddingLeft: '26px' }}>
             <div style={{ fontSize: '12px', color: 'var(--text-2,#6b6b78)', fontWeight: 500 }}>{t('dash.netChange')}</div>
             <div style={{ fontSize: '30px', fontWeight: 650, letterSpacing: '-0.02em', marginTop: '6px', color: net >= 0 ? 'var(--pos)' : 'var(--neg)', fontVariantNumeric: 'tabular-nums' }}>
               {(net >= 0 ? '+' : '') + usd(net)}

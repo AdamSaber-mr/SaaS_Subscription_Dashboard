@@ -31,7 +31,7 @@ function Spinner() {
 }
 
 export default function App() {
-  const { theme, accent, user, authChecking, booted, error, setError, t } = useDashboard()
+  const { theme, accent, user, authChecking, booted, error, setError, t, isMobile, sidebarOpen, setSidebarOpen } = useDashboard()
   const location = useLocation()
 
   let content
@@ -54,10 +54,16 @@ export default function App() {
     content = (
       <>
         <Sidebar />
+        {isMobile && sidebarOpen && (
+          <div
+            onClick={() => setSidebarOpen(false)}
+            style={{ position: 'fixed', inset: 0, zIndex: 90, background: 'rgba(8,8,12,0.4)', backdropFilter: 'blur(2px)' }}
+          />
+        )}
         <main style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
           <Topbar />
           {/* keyed by path so entrance animations replay on navigation */}
-          <div key={location.pathname} style={{ flex: 1, padding: '26px 30px 60px' }}>
+          <div key={location.pathname} style={{ flex: 1, padding: isMobile ? '16px 14px 48px' : '26px 30px 60px' }}>
             <Routes>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/insights" element={<Insights />} />

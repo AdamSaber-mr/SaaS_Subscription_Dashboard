@@ -53,8 +53,12 @@ function NavButton({ item, active, onClick }) {
 }
 
 export default function Sidebar() {
-  const { route, companyName, theme, toggleTheme, go, user, logout, lang, setLang, t } = useDashboard()
+  const { route, companyName, theme, toggleTheme, go, user, logout, lang, setLang, t, isMobile, sidebarOpen } = useDashboard()
   const isActive = (id) => (id === 'customers' ? route === 'customers' || route === 'detail' : route === id)
+
+  // Drawer on mobile: simply not rendered while closed (the hamburger in the
+  // topbar opens it; navigating closes it again).
+  if (isMobile && !sidebarOpen) return null
 
   const themeLabel = theme === 'light' ? t('sidebar.darkMode') : t('sidebar.lightMode')
   const themeIcon =
@@ -65,15 +69,19 @@ export default function Sidebar() {
   return (
     <aside
       style={{
-        width: '240px',
+        width: isMobile ? '272px' : '240px',
         flex: 'none',
         borderRight: '1px solid var(--border,#ececef)',
         background: 'var(--surface,#fff)',
         display: 'flex',
         flexDirection: 'column',
-        position: 'sticky',
+        position: isMobile ? 'fixed' : 'sticky',
         top: 0,
+        left: 0,
         height: '100vh',
+        zIndex: isMobile ? 95 : 'auto',
+        boxShadow: isMobile ? '0 0 60px rgba(8,8,12,0.3)' : 'none',
+        overflowY: 'auto',
       }}
     >
       <div style={{ padding: '22px 20px 18px', display: 'flex', alignItems: 'center', gap: '11px' }}>
