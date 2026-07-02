@@ -45,6 +45,8 @@ const DICT = {
       resetDone: 'Je wachtwoord is gewijzigd — je kunt nu inloggen.',
       resetInvalid: 'Deze resetlink is ongeldig of verlopen. Vraag een nieuwe aan.',
       setPassword: 'Wachtwoord opslaan',
+      inviteTitle: 'Uitnodiging voor {team}', inviteIntro: 'Maak je account aan en je zit direct in het team.',
+      inviteAccept: 'Uitnodiging accepteren', inviteInvalid: 'Deze uitnodiging is ongeldig, verlopen of al gebruikt.',
     },
     import: {
       button: 'CSV importeren', title: 'Klanten importeren uit CSV',
@@ -193,6 +195,12 @@ const DICT = {
       currentPassword: 'Huidig wachtwoord', newPassword: 'Nieuw wachtwoord', confirmPassword: 'Bevestig nieuw wachtwoord',
       save: 'Opslaan', saving: 'Opslaan…', saved: 'Opgeslagen ✓',
       changePassword: 'Wachtwoord wijzigen', passwordChanged: 'Wachtwoord gewijzigd ✓',
+      teamMembersTitle: 'Teamleden', teamMembersSub: 'Wie toegang heeft tot deze omgeving',
+      you: 'jij', inviteEmail: 'E-mailadres van je collega', invite: 'Uitnodigen',
+      invited: 'Uitnodiging verstuurd ✓ — deel eventueel zelf de link hieronder:',
+      pending: 'Openstaande uitnodigingen', copyLink: 'Kopieer link', copied: 'Gekopieerd ✓',
+      revoke: 'Intrekken', expires: 'verloopt {date}',
+      inviteTaken: 'Dit e-mailadres heeft al een account.',
     },
     infoTip: 'Meer info: ',
   },
@@ -213,6 +221,8 @@ const DICT = {
       resetDone: 'Your password has been changed — you can sign in now.',
       resetInvalid: 'This reset link is invalid or expired. Request a new one.',
       setPassword: 'Save password',
+      inviteTitle: 'Invitation to {team}', inviteIntro: 'Create your account and you are in the team right away.',
+      inviteAccept: 'Accept invitation', inviteInvalid: 'This invitation is invalid, expired or already used.',
     },
     import: {
       button: 'Import CSV', title: 'Import customers from CSV',
@@ -361,6 +371,12 @@ const DICT = {
       currentPassword: 'Current password', newPassword: 'New password', confirmPassword: 'Confirm new password',
       save: 'Save', saving: 'Saving…', saved: 'Saved ✓',
       changePassword: 'Change password', passwordChanged: 'Password changed ✓',
+      teamMembersTitle: 'Team members', teamMembersSub: 'Who has access to this workspace',
+      you: 'you', inviteEmail: "Your colleague's email address", invite: 'Invite',
+      invited: 'Invitation sent ✓ — you can also share the link below yourself:',
+      pending: 'Pending invitations', copyLink: 'Copy link', copied: 'Copied ✓',
+      revoke: 'Revoke', expires: 'expires {date}',
+      inviteTaken: 'This email address already has an account.',
     },
     infoTip: 'More info: ',
   },
@@ -372,6 +388,7 @@ export function apiErrorText(err, t) {
   if (msg === 'demo_read_only') return t('demo.readOnly')
   if (msg === 'plan_in_use') return t('plans.inUse')
   if (String(msg).includes('invalid_reset_token')) return t('login.resetInvalid')
+  if (String(msg).includes('invite_email_taken')) return t('settings.inviteTaken')
   return msg
 }
 

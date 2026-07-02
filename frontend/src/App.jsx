@@ -7,6 +7,7 @@ import Topbar from './components/Topbar.jsx'
 import Modal from './components/Modal.jsx'
 import Login from './pages/Login.jsx'
 import ResetPassword from './pages/ResetPassword.jsx'
+import InviteAccept from './pages/InviteAccept.jsx'
 import Dashboard from './pages/Dashboard.jsx'
 import Insights from './pages/Insights.jsx'
 import Customers from './pages/Customers.jsx'
@@ -34,7 +35,7 @@ function Spinner() {
 }
 
 export default function App() {
-  const { theme, accent, user, authChecking, booted, error, setError, t, isMobile, sidebarOpen, setSidebarOpen, logout } = useDashboard()
+  const { theme, accent, user, authChecking, booted, error, setError, t, isMobile, sidebarOpen, setSidebarOpen, logout, updateUser } = useDashboard()
   const location = useLocation()
 
   // Demo visitors get a standing invitation to make it their own.
@@ -51,9 +52,16 @@ export default function App() {
       </Centered>
     )
   } else if (!user) {
-    // The emailed reset link must work logged out; everything else gets the
-    // login gate (and lands back on its URL after signing in).
-    content = location.pathname === '/reset-password' ? <ResetPassword /> : <Login />
+    // Emailed reset and invite links must work logged out; everything else
+    // gets the login gate (and lands back on its URL after signing in).
+    content =
+      location.pathname === '/reset-password' ? (
+        <ResetPassword />
+      ) : location.pathname === '/invite' ? (
+        <InviteAccept onAccepted={updateUser} />
+      ) : (
+        <Login />
+      )
   } else if (!booted) {
     content = (
       <Centered>
