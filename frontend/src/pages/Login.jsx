@@ -18,10 +18,8 @@ const labelStyle = { display: 'block', fontSize: '12px', fontWeight: 500, color:
 export default function Login() {
   const { login, register, t } = useDashboard()
   const [mode, setMode] = useState('login') // 'login' | 'register'
-  // Dev convenience: prefilled so signing in is one click while testing.
-  // TODO: remove the prefill before anything production-like.
-  const [email, setEmail] = useState('adamsaber.db@gmail.com')
-  const [password, setPassword] = useState('password')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [name, setName] = useState('')
   const [company, setCompany] = useState('')
   const [error, setError] = useState(null)
@@ -32,10 +30,6 @@ export default function Login() {
   const switchMode = () => {
     setMode(isRegister ? 'login' : 'register')
     setError(null)
-    if (!isRegister) {
-      setEmail('')
-      setPassword('')
-    }
   }
 
   const submit = async (e) => {
@@ -136,11 +130,6 @@ export default function Login() {
           {isRegister ? t('login.toLogin') : t('login.toRegister')}
         </button>
 
-        {!isRegister && (
-          <div style={{ fontSize: '11.5px', color: 'var(--text-3,#9a9aa6)', marginTop: '10px', textAlign: 'center' }}>
-            {t('login.demo', { email: 'ava@northwind.test', password: 'password' })}
-          </div>
-        )}
       </form>
     </div>
   )
