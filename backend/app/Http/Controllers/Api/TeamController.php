@@ -56,7 +56,12 @@ class TeamController extends Controller
             ],
         );
 
-        Notification::route('mail', $invitation->email)->notify(new \App\Notifications\TeamInviteNotification($invitation));
+        try {
+            Notification::route('mail', $invitation->email)->notify(new \App\Notifications\TeamInviteNotification($invitation));
+        } catch (\Throwable $e) {
+            // the copyable invite link below still works without mail
+            report($e);
+        }
 
         return response()->json([
             'id' => $invitation->id,

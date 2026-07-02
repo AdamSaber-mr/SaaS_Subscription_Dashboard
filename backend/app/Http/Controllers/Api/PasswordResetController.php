@@ -20,7 +20,13 @@ class PasswordResetController extends Controller
 
         $user = User::where('email', $request->input('email'))->first();
         if ($user && ! $user->is_demo) {
-            Password::sendResetLink(['email' => $user->email]);
+            try {
+                Password::sendResetLink(['email' => $user->email]);
+            } catch (\Throwable $e) {
+                // a mail outage must not leak through the generic answer;
+                // the failure goes to the logs/Sentry instead
+                report($e);
+            }
         }
 
         return response()->json(['message' => 'reset_link_sent']);
