@@ -49,6 +49,9 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\DenyDemoWrites::class])-
     Route::get('/customers', [CustomerController::class, 'index']);
     Route::get('/customers/{customer}', [CustomerController::class, 'show']);
 
+    // CSV import
+    Route::post('/import/customers', [\App\Http\Controllers\Api\ImportController::class, 'customers'])->middleware('throttle:10,1');
+
     // Subscription lifecycle
     Route::get('/subscriptions', [SubscriptionController::class, 'index']);
     Route::post('/subscriptions', [SubscriptionController::class, 'store']);
