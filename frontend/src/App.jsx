@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { useDashboard } from './store/DashboardContext.jsx'
 import { rootStyle } from './lib/theme.js'
+import { apiErrorText } from './lib/i18n.js'
 import Sidebar from './components/Sidebar.jsx'
 import Topbar from './components/Topbar.jsx'
 import Modal from './components/Modal.jsx'
@@ -32,8 +33,14 @@ function Spinner() {
 }
 
 export default function App() {
-  const { theme, accent, user, authChecking, booted, error, setError, t, isMobile, sidebarOpen, setSidebarOpen } = useDashboard()
+  const { theme, accent, user, authChecking, booted, error, setError, t, isMobile, sidebarOpen, setSidebarOpen, logout } = useDashboard()
   const location = useLocation()
+
+  // Demo visitors get a standing invitation to make it their own.
+  const leaveDemoAndRegister = async () => {
+    sessionStorage.setItem('revenue-os.openRegister', '1')
+    await logout()
+  }
 
   let content
   if (authChecking) {
@@ -62,6 +69,31 @@ export default function App() {
           />
         )}
         <main style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+          {user?.is_demo && (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexWrap: 'wrap',
+                gap: '8px 14px',
+                padding: '9px 14px',
+                background: 'var(--accent,#6E56CF)',
+                color: '#fff',
+                fontSize: '12.5px',
+                fontWeight: 500,
+                textAlign: 'center',
+              }}
+            >
+              <span>{t('demo.banner')}</span>
+              <button
+                onClick={leaveDemoAndRegister}
+                style={{ padding: '5px 12px', borderRadius: '8px', border: 'none', background: '#fff', color: 'var(--accent,#6E56CF)', fontSize: '12px', fontWeight: 650, cursor: 'pointer', whiteSpace: 'nowrap' }}
+              >
+                {t('demo.bannerCta')} →
+              </button>
+            </div>
+          )}
           <Topbar />
           {/* keyed by path so entrance animations replay on navigation */}
           <div key={location.pathname} style={{ flex: 1, padding: isMobile ? '16px 14px 48px' : '26px 30px 60px' }}>
@@ -106,7 +138,7 @@ export default function App() {
             boxShadow: '0 12px 30px rgba(8,8,12,0.25)',
           }}
         >
-          {error}
+          {apiErrorText(error, t)}
           <button
             onClick={() => setError(null)}
             style={{ border: 'none', background: 'rgba(255,255,255,0.2)', color: '#fff', borderRadius: '7px', padding: '4px 10px', fontSize: '12px', cursor: 'pointer' }}

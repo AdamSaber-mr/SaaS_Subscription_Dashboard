@@ -45,6 +45,13 @@ export function DashboardProvider({ children }) {
     setUser(res.user)
   }, [])
 
+  // Read-only tour of the seeded demo tenant — no account needed.
+  const demoLogin = useCallback(async () => {
+    const res = await api.post('/demo')
+    setToken(res.token)
+    setUser(res.user)
+  }, [])
+
   const logout = useCallback(async () => {
     try {
       await api.post('/logout')
@@ -275,7 +282,7 @@ export function DashboardProvider({ children }) {
   const value = useMemo(
     () => ({
       // auth
-      user, authChecking, login, register, logout, updateUser: setUser,
+      user, authChecking, login, register, demoLogin, logout, updateUser: setUser,
       // data
       plans, planMap, planRamp, maxPlanMrr, metrics, customerList, customerDetail,
       subscriptionList, booted, error, setError, actionBusy, refresh,
@@ -295,7 +302,7 @@ export function DashboardProvider({ children }) {
       openNewSub, openChangePlan, openCancel, closeModal,
     }),
     [
-      user, authChecking, login, register, logout,
+      user, authChecking, login, register, demoLogin, logout,
       plans, planMap, planRamp, maxPlanMrr, metrics, customerList, customerDetail,
       subscriptionList, booted, error, actionBusy,
       lang, setLang, t,

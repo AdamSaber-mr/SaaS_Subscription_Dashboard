@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useDashboard } from '../store/DashboardContext.jsx'
 import { api } from '../lib/api.js'
+import { apiErrorText } from '../lib/i18n.js'
 
 const card = {
   background: 'var(--surface,#fff)',
@@ -48,7 +49,7 @@ function SectionCard({ title, sub, children, onSubmit, busy, done, error, button
 }
 
 // One small state machine per form: busy → saved ✓ (fades) or error.
-function useForm(action) {
+function useForm(action, t) {
   const [busy, setBusy] = useState(false)
   const [done, setDone] = useState(false)
   const [error, setError] = useState(null)
@@ -62,7 +63,7 @@ function useForm(action) {
       setDone(true)
       setTimeout(() => setDone(false), 3500)
     } catch (err) {
-      setError(err.message)
+      setError(apiErrorText(err, t))
     } finally {
       setBusy(false)
     }
@@ -82,16 +83,16 @@ export default function Settings() {
 
   const profile = useForm(async () => {
     updateUser(await api.patch('/settings/profile', { name, email }))
-  })
+  }, t)
   const team = useForm(async () => {
     updateUser(await api.patch('/settings/team', { name: company }))
-  })
+  }, t)
   const password = useForm(async () => {
     await api.put('/settings/password', { current_password: currentPw, password: newPw, password_confirmation: confirmPw })
     setCurrentPw('')
     setNewPw('')
     setConfirmPw('')
-  })
+  }, t)
 
   return (
     <div style={{ maxWidth: '640px', display: 'flex', flexDirection: 'column', gap: '16px' }}>

@@ -3,6 +3,7 @@ import { useDashboard } from '../store/DashboardContext.jsx'
 import { usePeriodMetrics } from '../hooks/usePeriodMetrics.js'
 import { usd, pct1, hexA } from '../lib/format.js'
 import { api } from '../lib/api.js'
+import { apiErrorText } from '../lib/i18n.js'
 import { DialogShell } from '../components/Modal.jsx'
 
 const card = {
@@ -56,7 +57,7 @@ function PlanFormModal({ plan, onClose, onSaved, t }) {
       else await api.post('/plans', body)
       onSaved()
     } catch (err) {
-      setError(err.message)
+      setError(apiErrorText(err, t))
       setBusy(false)
     }
   }
@@ -118,7 +119,7 @@ function DeletePlanModal({ plan, onClose, onDeleted, t }) {
       await api.del('/plans/' + plan.planId)
       onDeleted()
     } catch (err) {
-      setError(err.message === 'plan_in_use' ? t('plans.inUse') : err.message)
+      setError(apiErrorText(err, t))
       setBusy(false)
     }
   }

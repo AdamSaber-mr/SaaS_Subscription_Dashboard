@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useDashboard } from '../store/DashboardContext.jsx'
 
 const field = {
@@ -16,8 +16,16 @@ const field = {
 const labelStyle = { display: 'block', fontSize: '12px', fontWeight: 500, color: 'var(--text-2,#6b6b78)', marginBottom: '6px' }
 
 export default function Login() {
-  const { login, register, t } = useDashboard()
-  const [mode, setMode] = useState('login') // 'login' | 'register'
+  const { login, register, demoLogin, t } = useDashboard()
+  // The demo banner's CTA logs out and reopens this screen in register mode.
+  // Reading is side-effect free (StrictMode runs initializers twice); the
+  // flag is consumed in an effect.
+  const [mode, setMode] = useState(() =>
+    sessionStorage.getItem('revenue-os.openRegister') ? 'register' : 'login',
+  )
+  useEffect(() => {
+    sessionStorage.removeItem('revenue-os.openRegister')
+  }, [])
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
@@ -130,6 +138,36 @@ export default function Login() {
           {isRegister ? t('login.toLogin') : t('login.toRegister')}
         </button>
 
+        {!isRegister && (
+          <>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '14px 0' }}>
+              <div style={{ flex: 1, height: '1px', background: 'var(--border,#ececef)' }} />
+              <span style={{ fontSize: '10.5px', color: 'var(--text-3,#9a9aa6)', textTransform: 'uppercase', letterSpacing: '.05em' }}>of / or</span>
+              <div style={{ flex: 1, height: '1px', background: 'var(--border,#ececef)' }} />
+            </div>
+            <button
+              type="button"
+              onClick={async () => {
+                setBusy(true)
+                setError(null)
+                try {
+                  await demoLogin()
+                } catch (err) {
+                  setError(err.message)
+                  setBusy(false)
+                }
+              }}
+              disabled={busy}
+              style={{ width: '100%', padding: '11px', borderRadius: '10px', border: '1px solid var(--accent,#6E56CF)', background: 'var(--accent-weak,#f0edfb)', color: 'var(--accent,#6E56CF)', fontSize: '13px', fontWeight: 550, cursor: busy ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+              {t('demo.tryIt')}
+            </button>
+          </>
+        )}
       </form>
     </div>
   )

@@ -37,6 +37,12 @@ const DICT = {
       createAccount: 'Account aanmaken', creating: 'Account aanmaken…',
       toRegister: 'Nog geen account? Registreer je bedrijf', toLogin: 'Al een account? Log in',
     },
+    demo: {
+      tryIt: 'Bekijk eerst de demo met voorbeelddata',
+      banner: 'Je bekijkt de demo met voorbeelddata — kijk gerust rond, er kan niets stuk.',
+      bannerCta: 'Maak gratis je eigen account',
+      readOnly: 'In de demo kun je niets wijzigen. Maak gratis je eigen account om zelf klanten, abonnementen en plannen te beheren.',
+    },
     onboarding: {
       welcome: 'Welkom, {name}!',
       body: 'Je omgeving voor {company} staat klaar, maar er is nog geen data. Voeg je eerste abonnement toe en zie je omzetstatistieken tot leven komen.',
@@ -176,6 +182,12 @@ const DICT = {
       createAccount: 'Create account', creating: 'Creating account…',
       toRegister: 'No account yet? Register your company', toLogin: 'Already have an account? Sign in',
     },
+    demo: {
+      tryIt: 'Explore the demo with sample data first',
+      banner: 'You are viewing the demo with sample data — look around, nothing can break.',
+      bannerCta: 'Create your free account',
+      readOnly: 'The demo is read-only. Create your free account to manage your own customers, subscriptions and plans.',
+    },
     onboarding: {
       welcome: 'Welcome, {name}!',
       body: 'Your workspace for {company} is ready, but there is no data yet. Add your first subscription and watch your revenue metrics come to life.',
@@ -306,6 +318,14 @@ const DICT = {
     },
     infoTip: 'More info: ',
   },
+}
+
+/** Translate known API error markers; fall back to the raw message. */
+export function apiErrorText(err, t) {
+  const msg = err?.message ?? err
+  if (msg === 'demo_read_only') return t('demo.readOnly')
+  if (msg === 'plan_in_use') return t('plans.inUse')
+  return msg
 }
 
 function resolve(dict, key) {
