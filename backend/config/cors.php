@@ -13,6 +13,8 @@ return [
     'allowed_origins' => array_filter([
         env('FRONTEND_URL', 'http://localhost:5173'),
         'http://127.0.0.1:5173',
+        // The GitHub Pages build of the frontend (talks to a locally running API).
+        'https://adamsaber-mr.github.io',
     ]),
 
     'allowed_origins_patterns' => [],
