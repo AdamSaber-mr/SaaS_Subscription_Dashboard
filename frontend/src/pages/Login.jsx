@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useDashboard } from '../store/DashboardContext.jsx'
+import { api } from '../lib/api.js'
 
 const field = {
   width: '100%',
@@ -22,7 +23,7 @@ export default function Login() {
   // flag is consumed in an effect.
   const [mode, setMode] = useState(() =>
     sessionStorage.getItem('revenue-os.openRegister') ? 'register' : 'login',
-  )
+  ) // 'login' | 'register' | 'forgot'
   useEffect(() => {
     sessionStorage.removeItem('revenue-os.openRegister')
   }, [])
@@ -32,12 +33,15 @@ export default function Login() {
   const [company, setCompany] = useState('')
   const [error, setError] = useState(null)
   const [busy, setBusy] = useState(false)
+  const [linkSent, setLinkSent] = useState(false)
 
   const isRegister = mode === 'register'
+  const isForgot = mode === 'forgot'
 
   const switchMode = () => {
-    setMode(isRegister ? 'login' : 'register')
+    setMode(isRegister || isForgot ? 'login' : 'register')
     setError(null)
+    setLinkSent(false)
   }
 
   const submit = async (e) => {
@@ -45,8 +49,15 @@ export default function Login() {
     setBusy(true)
     setError(null)
     try {
-      if (isRegister) await register({ name, company, email, password })
-      else await login(email, password)
+      if (isForgot) {
+        await api.post('/forgot-password', { email })
+        setLinkSent(true)
+        setBusy(false)
+      } else if (isRegister) {
+        await register({ name, company, email, password })
+      } else {
+        await login(email, password)
+      }
     } catch (err) {
       setError(err.message || 'Login failed')
       setBusy(false)
@@ -77,7 +88,7 @@ export default function Login() {
           </div>
           <div style={{ lineHeight: 1.1 }}>
             <div style={{ fontSize: '16px', fontWeight: 600, letterSpacing: '-0.01em', color: 'var(--text,#15151b)' }}>Revenue OS</div>
-            <div style={{ fontSize: '11.5px', color: 'var(--text-3,#9a9aa6)' }}>{isRegister ? t('login.createAccount') : t('login.signIn')}</div>
+            <div style={{ fontSize: '11.5px', color: 'var(--text-3,#9a9aa6)' }}>{isRegister ? t('login.createAccount') : isForgot ? t('login.forgotTitle') : t('login.signIn')}</div>
           </div>
         </div>
 
@@ -95,16 +106,41 @@ export default function Login() {
           </>
         )}
 
+        {isForgot && (
+          <div style={{ fontSize: '12.5px', lineHeight: 1.5, color: 'var(--text-2,#6b6b78)', marginBottom: '14px' }}>{t('login.forgotIntro')}</div>
+        )}
+
         <label style={labelStyle} htmlFor="login-email">
           {t('login.email')}
         </label>
         <input id="login-email" type="email" required autoFocus={!isRegister} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@company.com" style={{ ...field, marginBottom: '14px' }} />
 
-        <label style={labelStyle} htmlFor="login-password">
-          {t('login.password')}
-        </label>
-        <input id="login-password" type="password" required minLength={isRegister ? 8 : undefined} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" style={{ ...field, marginBottom: '18px' }} />
+        {!isForgot && (
+          <>
+            <label style={labelStyle} htmlFor="login-password">
+              {t('login.password')}
+            </label>
+            <input id="login-password" type="password" required minLength={isRegister ? 8 : undefined} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" style={{ ...field, marginBottom: '6px' }} />
+          </>
+        )}
+        {!isRegister && !isForgot && (
+          <button
+            type="button"
+            onClick={() => {
+              setMode('forgot')
+              setError(null)
+            }}
+            style={{ display: 'block', marginLeft: 'auto', marginBottom: '12px', padding: 0, border: 'none', background: 'none', color: 'var(--text-3,#9a9aa6)', fontSize: '11.5px', cursor: 'pointer' }}
+          >
+            {t('login.forgot')}
+          </button>
+        )}
 
+        {linkSent && (
+          <div role="status" style={{ fontSize: '12.5px', lineHeight: 1.5, color: 'var(--pos,#1f9d5b)', background: 'var(--pos-weak,#e8f6ee)', borderRadius: '9px', padding: '9px 12px', marginBottom: '14px' }}>
+            {t('login.linkSent')}
+          </div>
+        )}
         {error && (
           <div role="alert" style={{ fontSize: '12.5px', color: 'var(--neg,#e5484d)', background: 'var(--neg-weak,#fdecec)', borderRadius: '9px', padding: '9px 12px', marginBottom: '14px' }}>
             {error}
@@ -127,7 +163,17 @@ export default function Login() {
             opacity: busy ? 0.7 : 1,
           }}
         >
-          {isRegister ? (busy ? t('login.creating') : t('login.createAccount')) : busy ? t('login.signingIn') : t('login.signIn')}
+          {isForgot
+            ? busy
+              ? t('login.sending')
+              : t('login.sendLink')
+            : isRegister
+              ? busy
+                ? t('login.creating')
+                : t('login.createAccount')
+              : busy
+                ? t('login.signingIn')
+                : t('login.signIn')}
         </button>
 
         <button
@@ -135,10 +181,10 @@ export default function Login() {
           onClick={switchMode}
           style={{ width: '100%', marginTop: '12px', padding: '8px', border: 'none', background: 'none', color: 'var(--accent,#6E56CF)', fontSize: '12.5px', fontWeight: 550, cursor: 'pointer' }}
         >
-          {isRegister ? t('login.toLogin') : t('login.toRegister')}
+          {isRegister || isForgot ? t('login.backToLogin') : t('login.toRegister')}
         </button>
 
-        {!isRegister && (
+        {!isRegister && !isForgot && (
           <>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '14px 0' }}>
               <div style={{ flex: 1, height: '1px', background: 'var(--border,#ececef)' }} />

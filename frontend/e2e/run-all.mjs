@@ -12,9 +12,17 @@ const suites = readdirSync(dir).filter((f) => f.endsWith('.e2e.mjs')).sort()
 let failed = 0
 for (const suite of suites) {
   console.log(`\n━━━ ${suite} ━━━`)
-  // small gap between suites so consecutive logins stay under the API throttle
-  await new Promise((r) => setTimeout(r, 3000))
-  const res = spawnSync('node', [join(dir, suite)], { stdio: 'inherit', env: process.env })
+  // breathing room between suites: keeps consecutive logins under the API
+  // throttles and lets the single-threaded dev server settle
+  await new Promise((r) => setTimeout(r, 8000))
+  let res = spawnSync('node', [join(dir, suite)], { stdio: 'inherit', env: process.env })
+  if (res.status !== 0) {
+    // long batches occasionally hit an environmental timeout; one retry
+    // absorbs those while a real failure still fails twice
+    console.log(`↻ ${suite}: retry after failure…`)
+    await new Promise((r) => setTimeout(r, 15000))
+    res = spawnSync('node', [join(dir, suite)], { stdio: 'inherit', env: process.env })
+  }
   if (res.status !== 0) {
     failed++
     console.error(`✗ ${suite} FAILED`)

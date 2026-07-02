@@ -6,6 +6,7 @@ import Sidebar from './components/Sidebar.jsx'
 import Topbar from './components/Topbar.jsx'
 import Modal from './components/Modal.jsx'
 import Login from './pages/Login.jsx'
+import ResetPassword from './pages/ResetPassword.jsx'
 import Dashboard from './pages/Dashboard.jsx'
 import Insights from './pages/Insights.jsx'
 import Customers from './pages/Customers.jsx'
@@ -50,8 +51,9 @@ export default function App() {
       </Centered>
     )
   } else if (!user) {
-    // Any URL shows the login gate; after signing in you land on that same URL.
-    content = <Login />
+    // The emailed reset link must work logged out; everything else gets the
+    // login gate (and lands back on its URL after signing in).
+    content = location.pathname === '/reset-password' ? <ResetPassword /> : <Login />
   } else if (!booted) {
     content = (
       <Centered>

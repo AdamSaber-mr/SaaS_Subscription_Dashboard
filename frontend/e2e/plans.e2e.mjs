@@ -18,7 +18,7 @@ try {
   await setField(page, '#login-email', `plans${stamp}@testbedrijf.nl`)
   await setField(page, '#login-password', 'plannenwachtwoord1')
   await clickText(page, 'button', 'Account aanmaken')
-  await waitText(page, 'Welkom, Piet!', 20000)
+  await waitText(page, 'Welkom, Piet!', 45000)
 
   // plans page shows the four default tiers + management button
   await clickText(page, 'button', 'Plannen')

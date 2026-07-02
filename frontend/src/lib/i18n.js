@@ -36,6 +36,15 @@ const DICT = {
       name: 'Je naam', company: 'Bedrijfsnaam',
       createAccount: 'Account aanmaken', creating: 'Account aanmaken…',
       toRegister: 'Nog geen account? Registreer je bedrijf', toLogin: 'Al een account? Log in',
+      forgot: 'Wachtwoord vergeten?', forgotTitle: 'Wachtwoord vergeten',
+      forgotIntro: 'Vul je e-mailadres in; als er een account bestaat sturen we een resetlink.',
+      sendLink: 'Stuur resetlink', sending: 'Versturen…',
+      linkSent: 'Als dit e-mailadres bekend is, is er zojuist een resetlink verstuurd. Check ook je spamfolder.',
+      backToLogin: 'Terug naar inloggen',
+      resetTitle: 'Nieuw wachtwoord instellen',
+      resetDone: 'Je wachtwoord is gewijzigd — je kunt nu inloggen.',
+      resetInvalid: 'Deze resetlink is ongeldig of verlopen. Vraag een nieuwe aan.',
+      setPassword: 'Wachtwoord opslaan',
     },
     import: {
       button: 'CSV importeren', title: 'Klanten importeren uit CSV',
@@ -195,6 +204,15 @@ const DICT = {
       name: 'Your name', company: 'Company name',
       createAccount: 'Create account', creating: 'Creating account…',
       toRegister: 'No account yet? Register your company', toLogin: 'Already have an account? Sign in',
+      forgot: 'Forgot your password?', forgotTitle: 'Forgot password',
+      forgotIntro: 'Enter your email address; if an account exists we will send a reset link.',
+      sendLink: 'Send reset link', sending: 'Sending…',
+      linkSent: 'If this email address is known, a reset link is on its way. Check your spam folder too.',
+      backToLogin: 'Back to sign in',
+      resetTitle: 'Set a new password',
+      resetDone: 'Your password has been changed — you can sign in now.',
+      resetInvalid: 'This reset link is invalid or expired. Request a new one.',
+      setPassword: 'Save password',
     },
     import: {
       button: 'Import CSV', title: 'Import customers from CSV',
@@ -353,6 +371,7 @@ export function apiErrorText(err, t) {
   const msg = err?.message ?? err
   if (msg === 'demo_read_only') return t('demo.readOnly')
   if (msg === 'plan_in_use') return t('plans.inUse')
+  if (String(msg).includes('invalid_reset_token')) return t('login.resetInvalid')
   return msg
 }
 

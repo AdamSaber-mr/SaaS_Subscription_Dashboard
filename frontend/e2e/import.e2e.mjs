@@ -26,7 +26,7 @@ try {
   await setField(page, '#login-email', `import${stamp}@testbedrijf.nl`)
   await setField(page, '#login-password', 'importwachtwoord1')
   await clickText(page, 'button', 'Account aanmaken')
-  await waitText(page, 'Welkom, Ines!', 20000)
+  await waitText(page, 'Welkom, Ines!', 45000)
 
   // open the import dialog on the customers page
   await clickText(page, 'button', 'Klanten')

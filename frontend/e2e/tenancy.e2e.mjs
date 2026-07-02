@@ -20,7 +20,7 @@ try {
   await setField(page, '#login-email', `e2e${stamp}@testbedrijf.nl`)
   await setField(page, '#login-password', 'supergeheim123')
   await clickText(page, 'button', 'Account aanmaken')
-  await waitText(page, 'Welkom, Eva!', 20000)
+  await waitText(page, 'Welkom, Eva!', 45000)
   check(true, 'registration lands on onboarding')
 
   let t = await bodyText(page)

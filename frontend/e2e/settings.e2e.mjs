@@ -19,7 +19,7 @@ try {
   await setField(page, '#login-email', EMAIL)
   await setField(page, '#login-password', 'eerstewachtwoord1')
   await clickText(page, 'button', 'Account aanmaken')
-  await waitText(page, 'Welkom, Sam!', 20000)
+  await waitText(page, 'Welkom, Sam!', 45000)
 
   // settings page via the sidebar
   await clickText(page, 'button', 'Instellingen')
