@@ -25,7 +25,7 @@ class SubscriptionService
     /**
      * Create a customer + subscription + first invoice + `new` event.
      *
-     * @param  array{name: string, plan: string}  $data
+     * @param  array{name: string, plan: string, email?: ?string, country?: ?string, country_code?: ?string}  $data
      */
     public function create(array $data, int $teamId): Subscription
     {
@@ -37,9 +37,9 @@ class SubscriptionService
             $customer = Customer::create([
                 'team_id' => $teamId,
                 'name' => $name,
-                'email' => $this->uniqueEmail($name, $teamId),
-                'country' => 'United States',
-                'country_code' => 'US',
+                'email' => $data['email'] ?? $this->uniqueEmail($name, $teamId),
+                'country' => $data['country'] ?? 'United States',
+                'country_code' => $data['country_code'] ?? 'US',
                 'signed_up_at' => $today,
             ]);
 

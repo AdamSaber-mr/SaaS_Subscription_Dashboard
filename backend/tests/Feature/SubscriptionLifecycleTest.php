@@ -54,6 +54,32 @@ class SubscriptionLifecycleTest extends TestCase
         ]);
     }
 
+    public function test_create_accepts_explicit_email_and_country(): void
+    {
+        $res = $this->postJson('/api/subscriptions', [
+            'name' => 'Echte Klant BV',
+            'plan' => 'growth',
+            'email' => 'facturen@echteklant.nl',
+            'country' => 'Netherlands',
+            'country_code' => 'NL',
+        ]);
+
+        $res->assertCreated();
+        $this->assertDatabaseHas('customers', [
+            'name' => 'Echte Klant BV',
+            'email' => 'facturen@echteklant.nl',
+            'country' => 'Netherlands',
+            'country_code' => 'NL',
+        ]);
+
+        // the same customer email twice within one team is a validation error
+        $this->postJson('/api/subscriptions', [
+            'name' => 'Andere BV',
+            'plan' => 'growth',
+            'email' => 'facturen@echteklant.nl',
+        ])->assertUnprocessable()->assertJsonValidationErrors(['email']);
+    }
+
     public function test_create_rejects_unknown_plan(): void
     {
         $this->postJson('/api/subscriptions', ['name' => 'X', 'plan' => 'nope'])

@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\MetricsController;
 use App\Http\Controllers\Api\PlanController;
+use App\Http\Controllers\Api\SettingsController;
 use App\Http\Controllers\Api\SubscriptionController;
 use Illuminate\Support\Facades\Route;
 
@@ -19,12 +20,17 @@ use Illuminate\Support\Facades\Route;
 */
 
 // Auth
-Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:5,1');
+Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:10,1');
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:30,1');
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', [AuthController::class, 'user']);
+
+    // Settings
+    Route::patch('/settings/profile', [SettingsController::class, 'updateProfile']);
+    Route::put('/settings/password', [SettingsController::class, 'updatePassword']);
+    Route::patch('/settings/team', [SettingsController::class, 'updateTeam']);
 
     // Reference & metrics
     Route::get('/plans', [PlanController::class, 'index']);
