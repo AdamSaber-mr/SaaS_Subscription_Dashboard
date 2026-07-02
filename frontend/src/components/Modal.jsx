@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useDashboard } from '../store/DashboardContext.jsx'
 import { usd } from '../lib/format.js'
+import { COUNTRIES } from '../lib/countries.js'
 
 // Accessible dialog shell: focus moves in on open, is trapped while open
 // (Tab cycles), Escape closes, and focus returns to the opener on close.
@@ -168,25 +169,54 @@ export default function Modal() {
     sub = t('modal.newSub')
     confirmLabel = t('modal.create')
     onConfirm = doNewSub
+    const inputStyle = {
+      width: '100%',
+      padding: '10px 12px',
+      borderRadius: '10px',
+      border: '1px solid var(--border,#ececef)',
+      background: 'var(--surface-2,#f6f6f8)',
+      color: 'var(--text,#15151b)',
+      fontSize: '13px',
+      outline: 'none',
+      boxSizing: 'border-box',
+    }
+    const fieldLabel = { fontSize: '12px', fontWeight: 500, color: 'var(--text-2,#6b6b78)', display: 'block', marginBottom: '6px' }
     body = (
       <>
-        <div style={{ marginBottom: '16px' }}>
-          <label style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text-2,#6b6b78)', display: 'block', marginBottom: '6px' }}>{t('modal.companyName')}</label>
+        <div style={{ marginBottom: '14px' }}>
+          <label style={fieldLabel}>{t('modal.companyName')}</label>
           <input
             value={modalForm.name}
             onChange={(e) => setModalForm((f) => ({ ...f, name: e.target.value }))}
             placeholder="Acme Inc."
-            style={{
-              width: '100%',
-              padding: '10px 12px',
-              borderRadius: '10px',
-              border: '1px solid var(--border,#ececef)',
-              background: 'var(--surface-2,#f6f6f8)',
-              color: 'var(--text,#15151b)',
-              fontSize: '13px',
-              outline: 'none',
-            }}
+            style={inputStyle}
           />
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '10px', marginBottom: '16px' }}>
+          <div>
+            <label style={fieldLabel}>{t('modal.customerEmail')}</label>
+            <input
+              type="email"
+              value={modalForm.email || ''}
+              onChange={(e) => setModalForm((f) => ({ ...f, email: e.target.value }))}
+              placeholder="billing@acme.com"
+              style={inputStyle}
+            />
+          </div>
+          <div>
+            <label style={fieldLabel}>{t('modal.country')}</label>
+            <select
+              value={modalForm.countryCode || 'NL'}
+              onChange={(e) => setModalForm((f) => ({ ...f, countryCode: e.target.value }))}
+              style={{ ...inputStyle, cursor: 'pointer' }}
+            >
+              {COUNTRIES.map(([name, code]) => (
+                <option key={code} value={code}>
+                  {name}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
         {planList}
       </>

@@ -11,6 +11,7 @@ import Customers from './pages/Customers.jsx'
 import CustomerDetail from './pages/CustomerDetail.jsx'
 import Plans from './pages/Plans.jsx'
 import Subscriptions from './pages/Subscriptions.jsx'
+import Settings from './pages/Settings.jsx'
 
 function Centered({ children }) {
   return (
@@ -71,6 +72,7 @@ export default function App() {
               <Route path="/customers/:id" element={<CustomerDetail />} />
               <Route path="/plans" element={<Plans />} />
               <Route path="/subscriptions" element={<Subscriptions />} />
+              <Route path="/settings" element={<Settings />} />
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Routes>
           </div>

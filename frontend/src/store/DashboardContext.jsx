@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { api, getToken, setToken, clearToken } from '../lib/api.js'
 import { planRampFor } from '../lib/theme.js'
 import { DEFAULT_LANG, LANGS, makeT } from '../lib/i18n.js'
+import { COUNTRIES } from '../lib/countries.js'
 import { useMediaQuery } from '../hooks/useMediaQuery.js'
 
 const DashboardContext = createContext(null)
@@ -226,8 +227,15 @@ export function DashboardProvider({ children }) {
 
   const doNewSub = useCallback(() => {
     const name = (modalForm.name || '').trim() || 'New Customer'
+    const country = COUNTRIES.find(([, code]) => code === modalForm.countryCode) || COUNTRIES[0]
     runAction(async () => {
-      await api.post('/subscriptions', { name, plan: modalForm.planId })
+      await api.post('/subscriptions', {
+        name,
+        plan: modalForm.planId,
+        email: (modalForm.email || '').trim() || null,
+        country: country[0],
+        country_code: country[1],
+      })
       navigate('/subscriptions')
     })
   }, [modalForm, runAction, navigate])
@@ -244,7 +252,7 @@ export function DashboardProvider({ children }) {
 
   // Modal openers. target: { subId, name, planId, mrr }
   const openNewSub = useCallback(() => {
-    setModalForm({ name: '', planId: 'growth' })
+    setModalForm({ name: '', planId: 'growth', email: '', countryCode: 'NL' })
     setModal({ kind: 'new' })
   }, [])
   const openChangePlan = useCallback((target) => {
@@ -267,7 +275,7 @@ export function DashboardProvider({ children }) {
   const value = useMemo(
     () => ({
       // auth
-      user, authChecking, login, register, logout,
+      user, authChecking, login, register, logout, updateUser: setUser,
       // data
       plans, planMap, planRamp, maxPlanMrr, metrics, customerList, customerDetail,
       subscriptionList, booted, error, setError, actionBusy,
