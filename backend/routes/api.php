@@ -26,6 +26,10 @@ Route::post('/demo', [AuthController::class, 'demo'])->middleware('throttle:15,1
 Route::post('/forgot-password', [\App\Http\Controllers\Api\PasswordResetController::class, 'forgot'])->middleware('throttle:5,1');
 Route::post('/reset-password', [\App\Http\Controllers\Api\PasswordResetController::class, 'reset'])->middleware('throttle:10,1');
 
+// Team invitations — the invitee is not signed in yet
+Route::get('/invitations/{token}', [\App\Http\Controllers\Api\TeamController::class, 'show'])->middleware('throttle:30,1');
+Route::post('/invitations/{token}/accept', [\App\Http\Controllers\Api\TeamController::class, 'accept'])->middleware('throttle:10,1');
+
 // Crash reports from the SPA's error boundary (public: crashes can happen pre-login)
 Route::post('/client-errors', [\App\Http\Controllers\Api\ClientErrorController::class, 'store'])->middleware('throttle:10,1');
 
@@ -37,6 +41,11 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\DenyDemoWrites::class])-
     Route::patch('/settings/profile', [SettingsController::class, 'updateProfile']);
     Route::put('/settings/password', [SettingsController::class, 'updatePassword']);
     Route::patch('/settings/team', [SettingsController::class, 'updateTeam']);
+
+    // Team members & invitations
+    Route::get('/team/members', [\App\Http\Controllers\Api\TeamController::class, 'members']);
+    Route::post('/team/invitations', [\App\Http\Controllers\Api\TeamController::class, 'invite'])->middleware('throttle:15,1');
+    Route::delete('/team/invitations/{invitation}', [\App\Http\Controllers\Api\TeamController::class, 'revoke']);
 
     // Plans (per-team tiers)
     Route::get('/plans', [PlanController::class, 'index']);
