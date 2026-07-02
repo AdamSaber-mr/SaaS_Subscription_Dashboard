@@ -14,25 +14,28 @@ use Illuminate\Support\Facades\Route;
 | Endpoints consumed by the React SPA in frontend/. See
 | backend/docs/02-api-endpoints.md for the full contract.
 |
-| NOTE: data routes are public for now. Wrap them in
-| Route::middleware('auth:sanctum') once login is built on the frontend.
+| Token auth (Sanctum): POST /login returns a bearer token; every data
+| route requires it via auth:sanctum.
 */
 
 // Auth
-Route::post('/login', [AuthController::class, 'login']);
-Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
-Route::get('/user', [AuthController::class, 'user'])->middleware('auth:sanctum');
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:10,1');
 
-// Reference & metrics
-Route::get('/plans', [PlanController::class, 'index']);
-Route::get('/metrics', [MetricsController::class, 'index']);
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::get('/user', [AuthController::class, 'user']);
 
-// Customers
-Route::get('/customers', [CustomerController::class, 'index']);
-Route::get('/customers/{customer}', [CustomerController::class, 'show']);
+    // Reference & metrics
+    Route::get('/plans', [PlanController::class, 'index']);
+    Route::get('/metrics', [MetricsController::class, 'index']);
 
-// Subscription lifecycle
-Route::get('/subscriptions', [SubscriptionController::class, 'index']);
-Route::post('/subscriptions', [SubscriptionController::class, 'store']);
-Route::patch('/subscriptions/{subscription}', [SubscriptionController::class, 'update']);
-Route::delete('/subscriptions/{subscription}', [SubscriptionController::class, 'destroy']);
+    // Customers
+    Route::get('/customers', [CustomerController::class, 'index']);
+    Route::get('/customers/{customer}', [CustomerController::class, 'show']);
+
+    // Subscription lifecycle
+    Route::get('/subscriptions', [SubscriptionController::class, 'index']);
+    Route::post('/subscriptions', [SubscriptionController::class, 'store']);
+    Route::patch('/subscriptions/{subscription}', [SubscriptionController::class, 'update']);
+    Route::delete('/subscriptions/{subscription}', [SubscriptionController::class, 'destroy']);
+});
