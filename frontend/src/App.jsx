@@ -82,6 +82,9 @@ export default function App() {
           {user?.is_demo && (
             <div
               style={{
+                position: 'sticky',
+                top: 0,
+                zIndex: 85,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -93,6 +96,7 @@ export default function App() {
                 fontSize: '12.5px',
                 fontWeight: 500,
                 textAlign: 'center',
+                boxShadow: '0 2px 10px rgba(8,8,12,0.18)',
               }}
             >
               <span>{t('demo.banner')}</span>
