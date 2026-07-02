@@ -1,12 +1,9 @@
-// The period filter options (mirrors MetricsService::PERIODS in the backend).
+// The period filter ids (mirrors MetricsService::PERIODS in the backend).
+// Labels come from the i18n dictionary: t('period.<id>') / t('periodIn.<id>').
 
 export const PERIODS = [
-  ['this_month', 'This month'],
-  ['last_month', 'Last month'],
-  ['last_quarter', 'Last quarter'],
-  ['last_12', '12 months'],
+  ['this_month'],
+  ['last_month'],
+  ['last_quarter'],
+  ['last_12'],
 ]
-
-export function periodLabel(p) {
-  return PERIODS.find((x) => x[0] === p)[1].toLowerCase()
-}

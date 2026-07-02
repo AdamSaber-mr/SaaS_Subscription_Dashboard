@@ -3,10 +3,10 @@ import { usd, initial, avatarStyle, fmtDate, fmtMonth } from '../lib/format.js'
 import { statusStyle } from '../lib/badges.js'
 import StatCard from '../components/StatCard.jsx'
 
-const EV_LABEL = { new: 'Subscribed', expansion: 'Upgraded', contraction: 'Downgraded', churn: 'Canceled' }
-
 export default function CustomerDetail() {
-  const { customerDetail: sel, go, openChangePlan, openCancel } = useDashboard()
+  const { customerDetail: sel, go, openChangePlan, openCancel, lang, t } = useDashboard()
+
+  const EV_LABEL = { new: t('detail.evNew'), expansion: t('detail.evExpansion'), contraction: t('detail.evContraction'), churn: t('detail.evChurn') }
 
   const back = (
     <button
@@ -18,7 +18,7 @@ export default function CustomerDetail() {
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M15 18l-6-6 6-6" />
       </svg>
-      All customers
+      {t('detail.back')}
     </button>
   )
 
@@ -26,7 +26,7 @@ export default function CustomerDetail() {
     return (
       <div style={{ maxWidth: '980px' }}>
         {back}
-        <div style={{ fontSize: '13px', color: 'var(--text-3,#9a9aa6)' }}>Loading customer…</div>
+        <div style={{ fontSize: '13px', color: 'var(--text-3,#9a9aa6)' }}>{t('detail.loading')}</div>
       </div>
     )
   }
@@ -36,10 +36,10 @@ export default function CustomerDetail() {
   const target = { subId: sel.subscriptionId, name: sel.name, planId: sel.plan?.id, mrr: sel.currentMrr }
 
   const stats = [
-    { label: 'Current plan', value: sel.plan?.name ?? '—', color: 'var(--text)' },
-    { label: 'Current MRR', value: isActive ? usd(sel.currentMrr) : '$0', color: 'var(--text)' },
-    { label: 'Lifetime paid', value: usd(sel.lifetimePaid), color: 'var(--accent)' },
-    { label: 'Customer since', value: fmtMonth(sel.signedUpAt), color: 'var(--text)' },
+    { label: t('detail.currentPlan'), value: sel.plan?.name ?? '—', color: 'var(--text)' },
+    { label: t('detail.currentMrr'), value: isActive ? usd(sel.currentMrr) : '$0', color: 'var(--text)' },
+    { label: t('detail.lifetimePaid'), value: usd(sel.lifetimePaid), color: 'var(--accent)' },
+    { label: t('detail.since'), value: fmtMonth(sel.signedUpAt, lang), color: 'var(--text)' },
   ]
 
   return (
@@ -52,14 +52,14 @@ export default function CustomerDetail() {
             <div style={{ fontSize: '21px', fontWeight: 600, letterSpacing: '-0.015em', color: 'var(--text,#15151b)' }}>{sel.name}</div>
             <div style={{ fontSize: '12.5px', color: 'var(--text-3,#9a9aa6)', marginTop: '2px' }}>{sel.email} · {sel.country}</div>
           </div>
-          <span style={statusStyle(isActive)}>{isActive ? 'Active' : 'Churned'}</span>
+          <span style={statusStyle(isActive)}>{isActive ? t('customers.statusActive') : t('customers.statusChurned')}</span>
         </div>
         <div style={{ display: 'flex', gap: '9px' }}>
           <button
             onClick={() => openChangePlan(target)}
             style={{ padding: '9px 14px', borderRadius: '10px', border: '1px solid var(--border-strong,#e0e0e6)', background: 'var(--surface,#fff)', color: 'var(--text,#15151b)', fontSize: '12.5px', fontWeight: 550, cursor: 'pointer' }}
           >
-            Change plan
+            {t('detail.changePlan')}
           </button>
           <button
             onClick={() => (isActive ? openCancel(target) : openChangePlan(target))}
@@ -69,7 +69,7 @@ export default function CustomerDetail() {
                 : { padding: '9px 14px', borderRadius: '10px', border: 'none', background: 'var(--accent)', color: '#fff', fontSize: '12.5px', fontWeight: 550, cursor: 'pointer' }
             }
           >
-            {isActive ? 'Cancel' : 'Reactivate'}
+            {isActive ? t('detail.cancel') : t('detail.reactivate')}
           </button>
         </div>
       </div>
@@ -82,14 +82,14 @@ export default function CustomerDetail() {
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.25fr', gap: '18px' }}>
         <div style={{ background: 'var(--surface,#fff)', border: '1px solid var(--border,#ececef)', borderRadius: '16px', padding: '20px 22px', boxShadow: 'var(--shadow)' }}>
-          <div style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--text,#15151b)', marginBottom: '16px' }}>Subscription timeline</div>
+          <div style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--text,#15151b)', marginBottom: '16px' }}>{t('detail.timeline')}</div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             {sel.timeline.map((ev, i) => {
               const color = ev.type === 'new' ? 'var(--accent)' : ev.type === 'churn' ? 'var(--neg)' : ev.type === 'expansion' ? 'var(--pos)' : 'var(--text-3)'
               let det = ''
-              if (ev.type === 'new') det = ' · ' + (ev.toPlan || '') + ' plan'
+              if (ev.type === 'new') det = ' · ' + t('detail.planSuffix', { plan: ev.toPlan || '' })
               else if (ev.type === 'expansion' || ev.type === 'contraction') det = ' · ' + ev.fromPlan + ' → ' + ev.toPlan
-              else if (ev.type === 'churn') det = ' · ' + (ev.fromPlan || ev.toPlan || '') + ' plan'
+              else if (ev.type === 'churn') det = ' · ' + t('detail.planSuffix', { plan: ev.fromPlan || ev.toPlan || '' })
               return (
                 <div key={i} style={{ display: 'flex', gap: '13px' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -98,7 +98,7 @@ export default function CustomerDetail() {
                   </div>
                   <div style={{ paddingBottom: '16px' }}>
                     <div style={{ fontSize: '12.5px', fontWeight: 550, color: 'var(--text,#15151b)' }}>{EV_LABEL[ev.type]}</div>
-                    <div style={{ fontSize: '11.5px', color: 'var(--text-3,#9a9aa6)', marginTop: '1px' }}>{fmtDate(ev.date)}{det}</div>
+                    <div style={{ fontSize: '11.5px', color: 'var(--text-3,#9a9aa6)', marginTop: '1px' }}>{fmtDate(ev.date, lang)}{det}</div>
                   </div>
                 </div>
               )
@@ -108,8 +108,8 @@ export default function CustomerDetail() {
 
         <div style={{ background: 'var(--surface,#fff)', border: '1px solid var(--border,#ececef)', borderRadius: '16px', padding: '20px 22px', boxShadow: 'var(--shadow)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
-            <div style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--text,#15151b)' }}>Payment history</div>
-            <span style={{ fontSize: '11.5px', color: 'var(--text-3,#9a9aa6)' }}>{paid.length + ' paid · ' + usd(sel.lifetimePaid)}</span>
+            <div style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--text,#15151b)' }}>{t('detail.payments')}</div>
+            <span style={{ fontSize: '11.5px', color: 'var(--text-3,#9a9aa6)' }}>{t('detail.paidSummary', { n: paid.length, amt: usd(sel.lifetimePaid) })}</span>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             {sel.invoices.slice(0, 12).map((iv, i) => {
@@ -128,10 +128,10 @@ export default function CustomerDetail() {
                     </div>
                     <div>
                       <div style={{ fontSize: '12.5px', fontWeight: 500, color: 'var(--text,#15151b)', fontVariantNumeric: 'tabular-nums' }}>{usd(iv.amount)}</div>
-                      <div style={{ fontSize: '11px', color: 'var(--text-3,#9a9aa6)' }}>{fmtDate(iv.date)}{iv.isRetry ? ' · retry' : ''}</div>
+                      <div style={{ fontSize: '11px', color: 'var(--text-3,#9a9aa6)' }}>{fmtDate(iv.date, lang)}{iv.isRetry ? ' · ' + t('detail.retry') : ''}</div>
                     </div>
                   </div>
-                  <span style={{ fontSize: '10.5px', fontWeight: 550, padding: '3px 9px', borderRadius: '20px', color, background: bg }}>{ok ? 'Paid' : ref ? 'Refunded' : 'Failed'}</span>
+                  <span style={{ fontSize: '10.5px', fontWeight: 550, padding: '3px 9px', borderRadius: '20px', color, background: bg }}>{ok ? t('detail.paid') : ref ? t('detail.refunded') : t('detail.failed')}</span>
                 </div>
               )
             })}

@@ -1,34 +1,33 @@
 import { useDashboard } from '../store/DashboardContext.jsx'
 import { usePeriodMetrics } from '../hooks/usePeriodMetrics.js'
-import { periodLabel } from '../lib/periods.js'
 import { usd, initial, avatarStyle, fmtMonth } from '../lib/format.js'
 import { planBadge, statusStyle } from '../lib/badges.js'
 import StatCard from '../components/StatCard.jsx'
 
 const GRID = '2.2fr 1.3fr 1fr 1fr 1fr 1.1fr'
 
-const COLS = [
-  ['name', 'Customer'],
-  ['plan', 'Plan'],
-  ['mrr', 'MRR'],
-  ['country', 'Country'],
-  ['status', 'Status'],
-  ['signup', 'Signed up'],
-]
-
 export default function Customers() {
   const {
-    customerList, metrics, planRamp, maxPlanMrr, period,
+    customerList, metrics, planRamp, maxPlanMrr, period, lang, t,
     search, setSearch, statusFilter, setStatusFilter,
     sortKey, sortDir, toggleSort, page, setPage, openCustomer,
   } = useDashboard()
   const { newCust, endActive, endMRR } = usePeriodMetrics()
 
+  const COLS = [
+    ['name', t('customers.colCustomer')],
+    ['plan', t('customers.colPlan')],
+    ['mrr', t('customers.colMrr')],
+    ['country', t('customers.colCountry')],
+    ['status', t('customers.colStatus')],
+    ['signup', t('customers.colSignup')],
+  ]
+
   const stats = [
-    { label: 'Active customers', value: String(endActive), sub: 'paying right now', color: 'var(--text)' },
-    { label: 'Churned', value: String(metrics.stats.churnedTotal), sub: 'cancelled to date', color: 'var(--neg)' },
-    { label: 'New this period', value: String(newCust), sub: 'signed up in ' + periodLabel(period), color: 'var(--pos)' },
-    { label: 'Total MRR', value: usd(endMRR), sub: 'from active subscriptions', color: 'var(--accent)' },
+    { label: t('customers.active'), value: String(endActive), sub: t('customers.activeSub'), color: 'var(--text)' },
+    { label: t('customers.churned'), value: String(metrics.stats.churnedTotal), sub: t('customers.churnedSub'), color: 'var(--neg)' },
+    { label: t('customers.newPeriod'), value: String(newCust), sub: t('customers.newPeriodSub', { period: t('periodIn.' + period) }), color: 'var(--pos)' },
+    { label: t('customers.totalMrr'), value: usd(endMRR), sub: t('customers.totalMrrSub'), color: 'var(--accent)' },
   ]
 
   const rows = customerList?.items ?? []
@@ -52,13 +51,13 @@ export default function Customers() {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search customers…"
-            aria-label="Search customers"
+            placeholder={t('customers.search')}
+            aria-label={t('customers.search')}
             style={{ width: '100%', padding: '9px 12px 9px 34px', borderRadius: '10px', border: '1px solid var(--border,#ececef)', background: 'var(--surface,#fff)', color: 'var(--text,#15151b)', fontSize: '13px', outline: 'none' }}
           />
         </div>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          {[['all', 'All'], ['active', 'Active'], ['churned', 'Churned']].map(([id, label]) => {
+          {[['all', t('customers.all')], ['active', t('customers.activeChip')], ['churned', t('customers.churnedChip')]].map(([id, label]) => {
             const a = statusFilter === id
             return (
               <button
@@ -103,7 +102,7 @@ export default function Customers() {
                 key={c.id}
                 role="link"
                 tabIndex={0}
-                aria-label={'Open customer ' + c.name}
+                aria-label={t('customers.openCustomer', { name: c.name })}
                 onClick={() => openCustomer(c.id)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
@@ -135,17 +134,15 @@ export default function Customers() {
                 </div>
                 <div style={{ fontSize: '12.5px', color: 'var(--text-2,#6b6b78)' }}>{c.country}</div>
                 <div style={{ display: 'flex', alignItems: 'center' }}>
-                  <span style={statusStyle(active)}>{active ? 'Active' : 'Churned'}</span>
+                  <span style={statusStyle(active)}>{active ? t('customers.statusActive') : t('customers.statusChurned')}</span>
                 </div>
-                <div style={{ fontSize: '12.5px', color: 'var(--text-2,#6b6b78)', fontVariantNumeric: 'tabular-nums' }}>{fmtMonth(c.signedUpAt)}</div>
+                <div style={{ fontSize: '12.5px', color: 'var(--text-2,#6b6b78)', fontVariantNumeric: 'tabular-nums' }}>{fmtMonth(c.signedUpAt, lang)}</div>
               </div>
             )
           })}
         </div>
         <div style={{ padding: '12px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', fontSize: '11.5px', color: 'var(--text-3,#9a9aa6)' }}>
-          <span>
-            Showing {rows.length} of {total} customers
-          </span>
+          <span>{t('customers.showing', { x: rows.length, y: total })}</span>
           {lastPage > 1 && (
             <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <button
@@ -153,17 +150,15 @@ export default function Customers() {
                 disabled={page <= 1}
                 style={{ padding: '5px 11px', borderRadius: '8px', border: '1px solid var(--border,#ececef)', background: 'var(--surface)', color: page <= 1 ? 'var(--text-3)' : 'var(--text)', fontSize: '11.5px', cursor: page <= 1 ? 'default' : 'pointer' }}
               >
-                ← Prev
+                {t('customers.prev')}
               </button>
-              <span style={{ fontVariantNumeric: 'tabular-nums' }}>
-                Page {page} of {lastPage}
-              </span>
+              <span style={{ fontVariantNumeric: 'tabular-nums' }}>{t('customers.page', { x: page, y: lastPage })}</span>
               <button
                 onClick={() => setPage(Math.min(lastPage, page + 1))}
                 disabled={page >= lastPage}
                 style={{ padding: '5px 11px', borderRadius: '8px', border: '1px solid var(--border,#ececef)', background: 'var(--surface)', color: page >= lastPage ? 'var(--text-3)' : 'var(--text)', fontSize: '11.5px', cursor: page >= lastPage ? 'default' : 'pointer' }}
               >
-                Next →
+                {t('customers.next')}
               </button>
             </span>
           )}

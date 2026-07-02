@@ -76,7 +76,7 @@ function DialogShell({ onClose, children }) {
   )
 }
 
-function PlanOption({ p, active, onClick }) {
+function PlanOption({ p, active, onClick, t }) {
   return (
     <button
       onClick={onClick}
@@ -98,8 +98,8 @@ function PlanOption({ p, active, onClick }) {
         <span style={{ fontSize: '13px', fontWeight: 550 }}>{p.name}</span>
         <span style={{ fontSize: '11px', color: 'var(--text-3,#9a9aa6)' }}>
           {p.interval === 'year'
-            ? '$' + p.price.toLocaleString('en-US') + '/yr · $' + p.mrr.toLocaleString('en-US') + ' MRR'
-            : '$' + p.price + '/mo'}
+            ? t('modal.yrPrice', { price: '$' + p.price.toLocaleString('en-US'), mrr: '$' + p.mrr.toLocaleString('en-US') })
+            : t('modal.moPrice', { price: '$' + p.price })}
         </span>
       </span>
       <span
@@ -119,7 +119,7 @@ function PlanOption({ p, active, onClick }) {
 export default function Modal() {
   const {
     modal, modalForm, setModalForm, plans, actionBusy,
-    closeModal, doChangePlan, doCancel, doNewSub,
+    closeModal, doChangePlan, doCancel, doNewSub, t,
   } = useDashboard()
 
   if (!modal) return null
@@ -136,46 +136,42 @@ export default function Modal() {
   const planList = (
     <div>
       <label style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text-2,#6b6b78)', display: 'block', marginBottom: '8px' }}>
-        {modal.kind === 'change' ? 'Select a new plan' : 'Choose a plan'}
+        {modal.kind === 'change' ? t('modal.selectNew') : t('modal.choose')}
       </label>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
         {plans.map((p) => (
-          <PlanOption key={p.id} p={p} active={modalForm.planId === p.id} onClick={() => selectPlan(p.id)} />
+          <PlanOption key={p.id} p={p} active={modalForm.planId === p.id} onClick={() => selectPlan(p.id)} t={t} />
         ))}
       </div>
     </div>
   )
 
   if (modal.kind === 'change') {
-    title = 'Change plan'
+    title = t('modal.changeTitle')
     sub = modal.name || ''
-    confirmLabel = 'Update plan'
+    confirmLabel = t('modal.update')
     onConfirm = doChangePlan
     body = planList
   } else if (modal.kind === 'cancel') {
-    title = 'Cancel subscription'
+    title = t('modal.cancelTitle')
     sub = modal.name || ''
-    confirmLabel = 'Confirm cancellation'
+    confirmLabel = t('modal.confirmCancel')
     confirmBg = 'var(--neg)'
     onConfirm = doCancel
     body = (
       <div style={{ fontSize: '13px', color: 'var(--text-2,#6b6b78)', lineHeight: 1.5 }}>
-        {'This will cancel ' +
-          (modal.name || 'this customer') +
-          '’s subscription effective this month. Their ' +
-          usd(modal.mrr || 0) +
-          ' MRR will move to churned, lowering net new MRR for the current period.'}
+        {t('modal.cancelBody', { name: modal.name || t('modal.thisCustomer'), mrr: usd(modal.mrr || 0) })}
       </div>
     )
   } else {
-    title = 'New subscription'
-    sub = 'Add a customer and start billing'
-    confirmLabel = 'Create subscription'
+    title = t('modal.newTitle')
+    sub = t('modal.newSub')
+    confirmLabel = t('modal.create')
     onConfirm = doNewSub
     body = (
       <>
         <div style={{ marginBottom: '16px' }}>
-          <label style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text-2,#6b6b78)', display: 'block', marginBottom: '6px' }}>Company name</label>
+          <label style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text-2,#6b6b78)', display: 'block', marginBottom: '6px' }}>{t('modal.companyName')}</label>
           <input
             value={modalForm.name}
             onChange={(e) => setModalForm((f) => ({ ...f, name: e.target.value }))}
@@ -218,7 +214,7 @@ export default function Modal() {
               cursor: 'pointer',
             }}
           >
-            Cancel
+            {t('modal.close')}
           </button>
           <button
             onClick={onConfirm}
@@ -235,7 +231,7 @@ export default function Modal() {
               opacity: actionBusy ? 0.7 : 1,
             }}
           >
-            {actionBusy ? 'Working…' : confirmLabel}
+            {actionBusy ? t('modal.working') : confirmLabel}
           </button>
         </div>
     </DialogShell>

@@ -7,18 +7,18 @@ import StatCard from '../components/StatCard.jsx'
 const GRID = '2fr 1.2fr 1fr 1fr 1.4fr'
 
 export default function Subscriptions() {
-  const { plans, planRamp, maxPlanMrr, metrics, subscriptionList, subPlanFilter, setSubPlanFilter, openChangePlan, openCancel } = useDashboard()
+  const { plans, planRamp, maxPlanMrr, metrics, subscriptionList, subPlanFilter, setSubPlanFilter, openChangePlan, openCancel, lang, t } = useDashboard()
   const { endMRR, endActive } = usePeriodMetrics()
 
   const annualCount = metrics.planMix.filter((p) => p.interval === 'year').reduce((a, p) => a + p.customers, 0)
   const stats = [
-    { label: 'Active subscriptions', value: String(endActive), sub: 'currently billing', color: 'var(--text)' },
-    { label: 'Total MRR', value: usd(endMRR), sub: 'recurring per month', color: 'var(--accent)' },
-    { label: 'Average MRR', value: usd(endActive ? endMRR / endActive : 0), sub: 'per subscription', color: 'var(--text)' },
-    { label: 'On annual billing', value: String(annualCount), sub: 'paid yearly upfront', color: 'var(--text)' },
+    { label: t('subs.active'), value: String(endActive), sub: t('subs.activeSub'), color: 'var(--text)' },
+    { label: t('subs.totalMrr'), value: usd(endMRR), sub: t('subs.totalMrrSub'), color: 'var(--accent)' },
+    { label: t('subs.avgMrr'), value: usd(endActive ? endMRR / endActive : 0), sub: t('subs.avgMrrSub'), color: 'var(--text)' },
+    { label: t('subs.annual'), value: String(annualCount), sub: t('subs.annualSub'), color: 'var(--text)' },
   ]
 
-  const chips = [['all', 'All plans']].concat(plans.map((p) => [p.id, p.name]))
+  const chips = [['all', t('subs.allPlans')]].concat(plans.map((p) => [p.id, p.name]))
   const rows = subscriptionList?.items ?? []
   const total = subscriptionList?.total ?? 0
 
@@ -57,11 +57,11 @@ export default function Subscriptions() {
 
       <div style={{ background: 'var(--surface,#fff)', border: '1px solid var(--border,#ececef)', borderRadius: '16px', boxShadow: 'var(--shadow)', overflow: 'hidden' }}>
         <div style={{ display: 'grid', gridTemplateColumns: GRID, gap: '14px', padding: '13px 20px', borderBottom: '1px solid var(--border,#ececef)', background: 'var(--surface-2,#f6f6f8)', fontSize: '11px', fontWeight: 600, color: 'var(--text-2,#6b6b78)', textTransform: 'uppercase', letterSpacing: '.04em' }}>
-          <span>Customer</span>
-          <span>Plan</span>
-          <span>MRR</span>
-          <span>Started</span>
-          <span style={{ textAlign: 'right' }}>Actions</span>
+          <span>{t('subs.colCustomer')}</span>
+          <span>{t('subs.colPlan')}</span>
+          <span>{t('subs.colMrr')}</span>
+          <span>{t('subs.colStarted')}</span>
+          <span style={{ textAlign: 'right' }}>{t('subs.colActions')}</span>
         </div>
         {rows.map((s) => (
           <div key={s.id} style={{ display: 'grid', gridTemplateColumns: GRID, gap: '14px', padding: '12px 20px', borderBottom: '1px solid var(--border,#ececef)', alignItems: 'center' }}>
@@ -79,26 +79,26 @@ export default function Subscriptions() {
               </div>
             </div>
             <div style={{ fontSize: '12.5px', color: 'var(--text-2,#6b6b78)', fontVariantNumeric: 'tabular-nums' }}>
-              {fmtMonth(s.startedAt)}
-              <div style={{ fontSize: '10.5px', color: 'var(--text-3,#9a9aa6)' }}>{s.interval === 'year' ? 'Annual' : 'Monthly'}</div>
+              {fmtMonth(s.startedAt, lang)}
+              <div style={{ fontSize: '10.5px', color: 'var(--text-3,#9a9aa6)' }}>{s.interval === 'year' ? t('subs.yearly') : t('subs.monthly')}</div>
             </div>
             <div style={{ display: 'flex', gap: '7px', justifyContent: 'flex-end' }}>
               <button
                 onClick={() => openChangePlan({ subId: s.id, name: s.customer.name, planId: s.plan.id, mrr: s.mrr })}
                 style={{ padding: '6px 11px', borderRadius: '8px', border: '1px solid var(--border-strong,#e0e0e6)', background: 'var(--surface,#fff)', color: 'var(--text,#15151b)', fontSize: '11.5px', fontWeight: 500, cursor: 'pointer' }}
               >
-                Change
+                {t('subs.change')}
               </button>
               <button
                 onClick={() => openCancel({ subId: s.id, name: s.customer.name, mrr: s.mrr })}
                 style={{ padding: '6px 11px', borderRadius: '8px', border: '1px solid var(--border-strong,#e0e0e6)', background: 'var(--surface,#fff)', color: 'var(--neg,#e5484d)', fontSize: '11.5px', fontWeight: 500, cursor: 'pointer' }}
               >
-                Cancel
+                {t('subs.cancel')}
               </button>
             </div>
           </div>
         ))}
-        <div style={{ padding: '12px 20px', fontSize: '11.5px', color: 'var(--text-3,#9a9aa6)' }}>Showing {rows.length} of {total} active subscriptions</div>
+        <div style={{ padding: '12px 20px', fontSize: '11.5px', color: 'var(--text-3,#9a9aa6)' }}>{t('subs.showing', { x: rows.length, y: total })}</div>
       </div>
     </div>
   )

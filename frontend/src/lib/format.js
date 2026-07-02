@@ -1,5 +1,6 @@
 // Number / currency formatting helpers.
 // Tabular numbers in the UI keep these aligned; these just produce the strings.
+import { MONTHS_SHORT } from './i18n.js'
 
 export function usd(n) {
   const neg = n < 0
@@ -46,20 +47,19 @@ export function spark(arr) {
   )
 }
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-
-// '2025-03-04' → 'Mar 04, 2025'
-export function fmtDate(iso) {
+// '2025-03-04' → 'Mar 04, 2025' (en) / '04 mrt 2025' (nl)
+export function fmtDate(iso, lang = 'en') {
   if (!iso) return ''
   const [y, m, d] = iso.split('-')
-  return MONTHS[Number(m) - 1] + ' ' + d + ', ' + y
+  const month = MONTHS_SHORT[lang][Number(m) - 1]
+  return lang === 'nl' ? d + ' ' + month + ' ' + y : month + ' ' + d + ', ' + y
 }
 
-// '2025-03-04' → "Mar '25"
-export function fmtMonth(iso) {
+// '2025-03-04' → "Mar '25" / "mrt '25"
+export function fmtMonth(iso, lang = 'en') {
   if (!iso) return ''
   const [y, m] = iso.split('-')
-  return MONTHS[Number(m) - 1] + " '" + y.slice(2)
+  return MONTHS_SHORT[lang][Number(m) - 1] + " '" + y.slice(2)
 }
 
 export function initial(n) {

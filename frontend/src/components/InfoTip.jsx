@@ -1,8 +1,10 @@
 import { useId, useState } from 'react'
+import { useDashboard } from '../store/DashboardContext.jsx'
 
 // A small ⓘ icon that reveals a plain-language explanation on hover or
 // keyboard focus. Self-contained: positions a fixed bubble above the icon.
 export default function InfoTip({ text, size = 13 }) {
+  const { t } = useDashboard()
   const [tip, setTip] = useState(null)
   const tipId = useId()
 
@@ -17,7 +19,7 @@ export default function InfoTip({ text, size = 13 }) {
       <span
         tabIndex={0}
         role="img"
-        aria-label={'More info: ' + text}
+        aria-label={t('infoTip') + text}
         aria-describedby={tip ? tipId : undefined}
         onMouseEnter={show}
         onMouseLeave={hide}

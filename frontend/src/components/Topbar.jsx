@@ -2,18 +2,10 @@ import { useDashboard } from '../store/DashboardContext.jsx'
 import { PERIODS } from '../lib/periods.js'
 import SegToggle from './SegToggle.jsx'
 
-const TITLES = {
-  dashboard: ['Overview', 'Your recurring revenue at a glance'],
-  insights: ['Insights', 'A plain-language summary of what changed'],
-  customers: ['Customers', 'Accounts, plans and payment history'],
-  detail: ['Customer', 'Account detail'],
-  plans: ['Plans', 'Tiers, adoption and revenue contribution'],
-  subscriptions: ['Subscriptions', 'Manage the subscription lifecycle'],
-}
-
 export default function Topbar() {
-  const { route, period, setPeriod, openNewSub } = useDashboard()
-  const [title, sub] = TITLES[route] || TITLES.dashboard
+  const { route, period, setPeriod, openNewSub, t } = useDashboard()
+  const titles = t('titles.' + route)
+  const [title, sub] = Array.isArray(titles) ? titles : t('titles.dashboard')
 
   return (
     <header
@@ -37,7 +29,7 @@ export default function Topbar() {
         <div style={{ fontSize: '12.5px', color: 'var(--text-3,#9a9aa6)', marginTop: '1px' }}>{sub}</div>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <SegToggle options={PERIODS} value={period} onChange={setPeriod} />
+        <SegToggle options={PERIODS.map(([id]) => [id, t('period.' + id)])} value={period} onChange={setPeriod} />
         <button
           onClick={openNewSub}
           style={{
@@ -61,7 +53,7 @@ export default function Topbar() {
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
             <path d="M12 5v14M5 12h14" />
           </svg>
-          New subscription
+          {t('newSub')}
         </button>
       </div>
     </header>

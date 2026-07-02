@@ -31,14 +31,14 @@ function Spinner() {
 }
 
 export default function App() {
-  const { theme, accent, user, authChecking, booted, error, setError } = useDashboard()
+  const { theme, accent, user, authChecking, booted, error, setError, t } = useDashboard()
   const location = useLocation()
 
   let content
   if (authChecking) {
     content = (
       <Centered>
-        <Spinner /> Checking session…
+        <Spinner /> {t('app.checkingSession')}
       </Centered>
     )
   } else if (!user) {
@@ -47,7 +47,7 @@ export default function App() {
   } else if (!booted) {
     content = (
       <Centered>
-        <Spinner /> Loading your revenue data…
+        <Spinner /> {t('app.loading')}
       </Centered>
     )
   } else {
@@ -103,7 +103,7 @@ export default function App() {
             onClick={() => setError(null)}
             style={{ border: 'none', background: 'rgba(255,255,255,0.2)', color: '#fff', borderRadius: '7px', padding: '4px 10px', fontSize: '12px', cursor: 'pointer' }}
           >
-            Dismiss
+            {t('app.dismiss')}
           </button>
         </div>
       )}
