@@ -12,7 +12,7 @@ class Plan extends Model
     use HasFactory;
 
     protected $fillable = [
-        'slug', 'name', 'blurb', 'price_cents', 'interval',
+        'team_id', 'slug', 'name', 'blurb', 'price_cents', 'interval',
         'mrr_cents', 'ramp_color', 'sort_order', 'is_active',
     ];
 

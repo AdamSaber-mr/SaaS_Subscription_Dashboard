@@ -35,17 +35,20 @@ class DemoDataSeeder extends Seeder
 
     public function run(): void
     {
-        $plans = Plan::all()->keyBy('slug');
+        $team = \App\Models\Team::firstOrCreate(['name' => 'Northwind']);
+
+        $plans = Plan::where('team_id', $team->id)->get()->keyBy('slug');
         if ($plans->isEmpty()) {
             $this->call(PlanSeeder::class);
-            $plans = Plan::all()->keyBy('slug');
+            $plans = Plan::where('team_id', $team->id)->get()->keyBy('slug');
         }
 
-        // Idempotent: wipe previous demo data (children first for the FKs).
-        DB::table('invoices')->delete();
-        DB::table('subscription_events')->delete();
-        DB::table('subscriptions')->delete();
-        DB::table('customers')->delete();
+        // Idempotent: wipe this team's previous demo data (children first for
+        // the FKs) — other tenants' data is untouched.
+        DB::table('invoices')->where('team_id', $team->id)->delete();
+        DB::table('subscription_events')->where('team_id', $team->id)->delete();
+        DB::table('subscriptions')->where('team_id', $team->id)->delete();
+        DB::table('customers')->where('team_id', $team->id)->delete();
 
         $this->rngState = self::SEED;
         $generated = $this->generate($plans);
@@ -71,6 +74,7 @@ class DemoDataSeeder extends Seeder
             $usedEmails[$email] = true;
 
             $customer = Customer::create([
+                'team_id' => $team->id,
                 'name' => $c['name'],
                 'email' => $email,
                 'country' => $c['country'],
@@ -79,6 +83,7 @@ class DemoDataSeeder extends Seeder
             ]);
 
             $subscription = Subscription::create([
+                'team_id' => $team->id,
                 'customer_id' => $customer->id,
                 'plan_id' => $plans[$c['plan']]->id,
                 'status' => $c['status'],
@@ -89,6 +94,7 @@ class DemoDataSeeder extends Seeder
 
             foreach ($c['events'] as $e) {
                 $events[] = [
+                    'team_id' => $team->id,
                     'subscription_id' => $subscription->id,
                     'customer_id' => $customer->id,
                     'type' => $e['type'],
@@ -103,6 +109,7 @@ class DemoDataSeeder extends Seeder
 
             foreach ($c['invoices'] as $inv) {
                 $invoices[] = [
+                    'team_id' => $team->id,
                     'customer_id' => $customer->id,
                     'subscription_id' => $subscription->id,
                     'plan_id' => $plans[$inv['plan']]->id,

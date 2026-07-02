@@ -12,7 +12,7 @@ class Customer extends Model
     use HasFactory;
 
     protected $fillable = [
-        'name', 'email', 'country', 'country_code', 'signed_up_at',
+        'team_id', 'name', 'email', 'country', 'country_code', 'signed_up_at',
     ];
 
     protected function casts(): array

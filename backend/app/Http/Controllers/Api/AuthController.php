@@ -4,12 +4,41 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\TeamService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
+    /** Register a new tenant: team + first user + default plans. */
+    public function register(Request $request, TeamService $teams)
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:120'],
+            'company' => ['required', 'string', 'max:120'],
+            'email' => ['required', 'email', 'max:190', 'unique:users,email'],
+            'password' => ['required', 'string', 'min:8'],
+        ]);
+
+        $user = DB::transaction(function () use ($data, $teams) {
+            $team = $teams->provision($data['company']);
+
+            return User::create([
+                'name' => $data['name'],
+                'email' => $data['email'],
+                'password' => $data['password'],
+                'team_id' => $team->id,
+            ]);
+        });
+
+        return response()->json([
+            'user' => $user->load('team'),
+            'token' => $user->createToken('spa')->plainTextToken,
+        ], 201);
+    }
+
     /** Authenticate and issue a Sanctum token. */
     public function login(Request $request)
     {
@@ -27,7 +56,7 @@ class AuthController extends Controller
         }
 
         return response()->json([
-            'user' => $user,
+            'user' => $user->load('team'),
             'token' => $user->createToken('spa')->plainTextToken,
         ]);
     }
@@ -43,6 +72,6 @@ class AuthController extends Controller
     /** The authenticated user (→ sidebar profile). */
     public function user(Request $request)
     {
-        return $request->user();
+        return $request->user()->load('team');
     }
 }

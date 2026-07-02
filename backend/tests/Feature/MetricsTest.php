@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\User;
-use Database\Seeders\PlanSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
@@ -14,25 +13,30 @@ class MetricsTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected \App\Models\Team $team;
+
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seed(PlanSeeder::class);
-        Sanctum::actingAs(User::factory()->create());
+        $user = User::factory()->create();
+        $this->team = $user->team;
+        app(\App\Services\TeamService::class)->seedDefaultPlans($this->team);
+        Sanctum::actingAs($user);
     }
 
     /** Create an active subscription whose `new` event happened $monthsAgo. */
     private function subscribe(string $slug, int $monthsAgo): Subscription
     {
-        $plan = Plan::where('slug', $slug)->firstOrFail();
+        $plan = $this->team->plans()->where('slug', $slug)->firstOrFail();
         $date = now()->startOfMonth()->subMonths($monthsAgo)->addDays(5)->toDateString();
 
         $sub = Subscription::factory()
-            ->for(Plan::where('slug', $slug)->first())
-            ->create(['started_at' => $date]);
-        $sub->customer->update(['signed_up_at' => $date]);
+            ->for($plan)
+            ->for(\App\Models\Customer::factory()->create(['team_id' => $this->team->id, 'signed_up_at' => $date]))
+            ->create(['team_id' => $this->team->id, 'started_at' => $date]);
 
         $sub->events()->create([
+            'team_id' => $this->team->id,
             'customer_id' => $sub->customer_id,
             'type' => 'new',
             'to_plan_id' => $plan->id,
@@ -48,6 +52,7 @@ class MetricsTest extends TestCase
         $date = now()->startOfMonth()->subMonths($monthsAgo)->addDays(10)->toDateString();
         $sub->update(['status' => 'canceled', 'canceled_at' => $date]);
         $sub->events()->create([
+            'team_id' => $this->team->id,
             'customer_id' => $sub->customer_id,
             'type' => 'churn',
             'from_plan_id' => $sub->plan_id,

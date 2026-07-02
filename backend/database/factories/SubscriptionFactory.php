@@ -15,6 +15,7 @@ class SubscriptionFactory extends Factory
     public function definition(): array
     {
         return [
+            'team_id' => \App\Models\Team::factory(),
             'customer_id' => Customer::factory(),
             'plan_id' => Plan::factory(),
             'status' => SubscriptionStatus::Active,

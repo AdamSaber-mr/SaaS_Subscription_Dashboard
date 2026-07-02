@@ -19,7 +19,7 @@ class StoreSubscriptionRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:120'],
-            'plan' => ['required', 'string', Rule::exists('plans', 'slug')],
+            'plan' => ['required', 'string', Rule::exists('plans', 'slug')->where('team_id', $this->user()->team_id)],
         ];
     }
 }

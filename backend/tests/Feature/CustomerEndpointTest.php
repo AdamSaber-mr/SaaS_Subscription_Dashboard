@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\User;
-use Database\Seeders\PlanSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
@@ -12,11 +11,15 @@ class CustomerEndpointTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected \App\Models\Team $team;
+
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seed(PlanSeeder::class);
-        Sanctum::actingAs(User::factory()->create());
+        $user = User::factory()->create();
+        $this->team = $user->team;
+        app(\App\Services\TeamService::class)->seedDefaultPlans($this->team);
+        Sanctum::actingAs($user);
     }
 
     private function makeSub(string $name, string $plan): int

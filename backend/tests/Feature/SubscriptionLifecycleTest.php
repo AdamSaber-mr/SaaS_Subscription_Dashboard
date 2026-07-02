@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\User;
-use Database\Seeders\PlanSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
@@ -14,11 +13,15 @@ class SubscriptionLifecycleTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected \App\Models\Team $team;
+
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seed(PlanSeeder::class);
-        Sanctum::actingAs(User::factory()->create());
+        $user = User::factory()->create();
+        $this->team = $user->team;
+        app(\App\Services\TeamService::class)->seedDefaultPlans($this->team);
+        Sanctum::actingAs($user);
     }
 
     private function eventLogMrr(Subscription $sub): int
@@ -36,7 +39,7 @@ class SubscriptionLifecycleTest extends TestCase
             ->assertJsonPath('data.status', 'active');
 
         $sub = Subscription::with('customer')->findOrFail($res->json('data.id'));
-        $growth = Plan::where('slug', 'growth')->first();
+        $growth = $this->team->plans()->where('slug', 'growth')->first();
 
         $this->assertSame('billing@acmeinc.com', $sub->customer->email);
         $this->assertDatabaseHas('subscription_events', [
@@ -65,7 +68,7 @@ class SubscriptionLifecycleTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.plan.id', 'scale');
 
-        [$growth, $scale] = [Plan::where('slug', 'growth')->first(), Plan::where('slug', 'scale')->first()];
+        [$growth, $scale] = [$this->team->plans()->where('slug', 'growth')->first(), $this->team->plans()->where('slug', 'scale')->first()];
         $this->assertDatabaseHas('subscription_events', [
             'subscription_id' => $id,
             'type' => 'expansion',
@@ -93,7 +96,7 @@ class SubscriptionLifecycleTest extends TestCase
             ->assertJsonPath('data.status', 'canceled');
 
         $sub = Subscription::find($id);
-        $scale = Plan::where('slug', 'scale')->first();
+        $scale = $this->team->plans()->where('slug', 'scale')->first();
         $this->assertNotNull($sub->canceled_at);
         $this->assertDatabaseHas('subscription_events', [
             'subscription_id' => $id,
@@ -119,7 +122,7 @@ class SubscriptionLifecycleTest extends TestCase
             ->assertJsonPath('data.status', 'active');
 
         $sub = Subscription::find($id);
-        $scale = Plan::where('slug', 'scale')->first();
+        $scale = $this->team->plans()->where('slug', 'scale')->first();
         $this->assertNull($sub->fresh()->canceled_at);
         // new(+s) + churn(−s) + reactivation(+s) = +s
         $this->assertSame($scale->mrr_cents, $this->eventLogMrr($sub));
@@ -133,7 +136,7 @@ class SubscriptionLifecycleTest extends TestCase
 
         $this->patchJson("/api/subscriptions/{$id}", ['plan' => 'growth'])->assertOk();
 
-        $growth = Plan::where('slug', 'growth')->first();
+        $growth = $this->team->plans()->where('slug', 'growth')->first();
         $this->assertSame($growth->mrr_cents, $this->eventLogMrr(Subscription::find($id)));
     }
 

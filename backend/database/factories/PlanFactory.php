@@ -11,6 +11,7 @@ class PlanFactory extends Factory
     public function definition(): array
     {
         return [
+            'team_id' => \App\Models\Team::factory(),
             'slug' => fake()->unique()->slug(2),
             'name' => ucfirst(fake()->unique()->word()),
             'blurb' => fake()->sentence(4),

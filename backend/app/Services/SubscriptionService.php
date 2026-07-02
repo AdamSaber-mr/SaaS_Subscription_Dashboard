@@ -27,22 +27,24 @@ class SubscriptionService
      *
      * @param  array{name: string, plan: string}  $data
      */
-    public function create(array $data): Subscription
+    public function create(array $data, int $teamId): Subscription
     {
-        return DB::transaction(function () use ($data) {
-            $plan = Plan::where('slug', $data['plan'])->firstOrFail();
+        return DB::transaction(function () use ($data, $teamId) {
+            $plan = Plan::where('team_id', $teamId)->where('slug', $data['plan'])->firstOrFail();
             $name = trim($data['name']) !== '' ? trim($data['name']) : 'New Customer';
             $today = now()->toDateString();
 
             $customer = Customer::create([
+                'team_id' => $teamId,
                 'name' => $name,
-                'email' => $this->uniqueEmail($name),
+                'email' => $this->uniqueEmail($name, $teamId),
                 'country' => 'United States',
                 'country_code' => 'US',
                 'signed_up_at' => $today,
             ]);
 
             $subscription = $customer->subscription()->create([
+                'team_id' => $teamId,
                 'plan_id' => $plan->id,
                 'status' => SubscriptionStatus::Active,
                 'billing_interval' => $plan->interval,
@@ -50,6 +52,7 @@ class SubscriptionService
             ]);
 
             $subscription->events()->create([
+                'team_id' => $teamId,
                 'customer_id' => $customer->id,
                 'type' => EventType::New,
                 'to_plan_id' => $plan->id,
@@ -58,6 +61,7 @@ class SubscriptionService
             ]);
 
             $subscription->invoices()->create([
+                'team_id' => $teamId,
                 'customer_id' => $customer->id,
                 'plan_id' => $plan->id,
                 'amount_cents' => $plan->price_cents,
@@ -76,7 +80,7 @@ class SubscriptionService
     public function changePlan(Subscription $subscription, string $planSlug): Subscription
     {
         return DB::transaction(function () use ($subscription, $planSlug) {
-            $plan = Plan::where('slug', $planSlug)->firstOrFail();
+            $plan = Plan::where('team_id', $subscription->team_id)->where('slug', $planSlug)->firstOrFail();
             $current = $subscription->plan;
             $today = now()->toDateString();
 
@@ -91,6 +95,7 @@ class SubscriptionService
                 ]);
 
                 $subscription->events()->create([
+                    'team_id' => $subscription->team_id,
                     'customer_id' => $subscription->customer_id,
                     'type' => EventType::New,
                     'from_plan_id' => $current->id,
@@ -100,6 +105,7 @@ class SubscriptionService
                 ]);
 
                 $subscription->invoices()->create([
+                    'team_id' => $subscription->team_id,
                     'customer_id' => $subscription->customer_id,
                     'plan_id' => $plan->id,
                     'amount_cents' => $plan->price_cents,
@@ -122,6 +128,7 @@ class SubscriptionService
             ]);
 
             $subscription->events()->create([
+                'team_id' => $subscription->team_id,
                 'customer_id' => $subscription->customer_id,
                 'type' => $delta > 0 ? EventType::Expansion : EventType::Contraction,
                 'from_plan_id' => $current->id,
@@ -153,6 +160,7 @@ class SubscriptionService
             ]);
 
             $subscription->events()->create([
+                'team_id' => $subscription->team_id,
                 'customer_id' => $subscription->customer_id,
                 'type' => EventType::Churn,
                 'from_plan_id' => $subscription->plan_id,
@@ -165,13 +173,13 @@ class SubscriptionService
         });
     }
 
-    /** billing@<name>.com like the frontend, suffixed if taken. */
-    private function uniqueEmail(string $name): string
+    /** billing@<name>.com like the frontend, suffixed if taken (per team). */
+    private function uniqueEmail(string $name, int $teamId): string
     {
         $slug = preg_replace('/[^a-z]/', '', strtolower($name)) ?: 'customer';
         $email = "billing@{$slug}.com";
 
-        for ($i = 2; Customer::where('email', $email)->exists(); $i++) {
+        for ($i = 2; Customer::where('team_id', $teamId)->where('email', $email)->exists(); $i++) {
             $email = "billing{$i}@{$slug}.com";
         }
 

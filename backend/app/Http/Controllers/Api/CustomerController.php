@@ -18,7 +18,9 @@ class CustomerController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Customer::query()->with('subscription.plan');
+        $query = Customer::query()
+            ->where('team_id', $request->user()->team_id)
+            ->with('subscription.plan');
 
         if ($search = $request->string('search')->trim()->value()) {
             $query->where(function ($q) use ($search) {
@@ -64,14 +66,12 @@ class CustomerController extends Controller
         return CustomerResource::collection($query->paginate(40));
     }
 
-    public function show(Customer $customer)
+    public function show(Request $request, int $customer)
     {
-        $customer->load([
-            'subscription.plan',
-            'events.fromPlan',
-            'events.toPlan',
-            'invoices',
-        ]);
+        $customer = Customer::query()
+            ->where('team_id', $request->user()->team_id) // other tenants' ids read as 404
+            ->with(['subscription.plan', 'events.fromPlan', 'events.toPlan', 'invoices'])
+            ->findOrFail($customer);
 
         return new CustomerDetailResource($customer);
     }

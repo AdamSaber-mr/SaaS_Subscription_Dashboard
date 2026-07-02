@@ -27,7 +27,7 @@ class MetricsService
     /** Cohort grid: number of signup cohorts / months-since-signup columns. */
     public const COHORT_COLS = 9;
 
-    public function forPeriod(string $period = 'last_12'): array
+    public function forPeriod(int $teamId, string $period = 'last_12'): array
     {
         if (! in_array($period, self::PERIODS, true)) {
             $period = 'last_12';
@@ -47,6 +47,7 @@ class MetricsService
         $baseMrr = 0;                        // MRR carried in from before the window
 
         SubscriptionEvent::query()
+            ->where('team_id', $teamId)
             ->select(['type', 'mrr_delta_cents', 'occurred_at'])
             ->orderBy('occurred_at')
             ->each(function (SubscriptionEvent $e) use (&$newM, &$expM, &$conM, &$chuM, &$newC, &$chuC, &$baseMrr, $monthIndex) {
@@ -76,6 +77,7 @@ class MetricsService
 
         // --- active customers per month + cohort inputs ------------------------
         $subs = Subscription::query()
+            ->where('subscriptions.team_id', $teamId)
             ->join('customers', 'customers.id', '=', 'subscriptions.customer_id')
             ->get(['customers.signed_up_at as signed_up_at', 'subscriptions.status', 'subscriptions.canceled_at'])
             ->map(fn ($s) => [
@@ -183,7 +185,7 @@ class MetricsService
                 'chuM' => array_map($dollars, $chuM),
             ],
             'cohort' => $this->cohort($subs, $activeAt, $base),
-            'planMix' => $this->planMix(),
+            'planMix' => $this->planMix($teamId),
         ];
     }
 
@@ -191,9 +193,10 @@ class MetricsService
      * Active customers + MRR per plan tier (→ Plans page, Insights top plan,
      * Subscriptions page stats).
      */
-    private function planMix(): array
+    private function planMix(int $teamId): array
     {
         return Plan::query()
+            ->where('team_id', $teamId)
             ->withCount(['subscriptions as customers' => fn ($q) => $q->where('status', SubscriptionStatus::Active)])
             ->orderBy('sort_order')
             ->get()

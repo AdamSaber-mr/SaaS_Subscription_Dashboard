@@ -15,12 +15,21 @@ class SubscriptionController extends Controller
 {
     public function __construct(private readonly SubscriptionService $subscriptions) {}
 
+    /** A subscription by id, but only within the caller's team (else 404). */
+    private function scoped(Request $request, int $id): Subscription
+    {
+        return Subscription::query()
+            ->where('team_id', $request->user()->team_id)
+            ->findOrFail($id);
+    }
+
     /**
      * Active subscriptions, optionally filtered by plan slug (?plan=growth).
      */
     public function index(Request $request)
     {
         $query = Subscription::query()
+            ->where('team_id', $request->user()->team_id)
             ->with(['customer', 'plan'])
             ->where('status', SubscriptionStatus::Active);
 
@@ -37,23 +46,26 @@ class SubscriptionController extends Controller
     /** New subscription (new customer + first invoice + `new` event). */
     public function store(StoreSubscriptionRequest $request)
     {
-        $subscription = $this->subscriptions->create($request->validated());
+        $subscription = $this->subscriptions->create($request->validated(), $request->user()->team_id);
 
         return new SubscriptionResource($subscription->load(['customer', 'plan']));
     }
 
     /** Change plan (appends expansion/contraction event). */
-    public function update(UpdateSubscriptionRequest $request, Subscription $subscription)
+    public function update(UpdateSubscriptionRequest $request, int $subscription)
     {
-        $subscription = $this->subscriptions->changePlan($subscription, $request->validated('plan'));
+        $subscription = $this->subscriptions->changePlan(
+            $this->scoped($request, $subscription),
+            $request->validated('plan'),
+        );
 
         return new SubscriptionResource($subscription->load(['customer', 'plan']));
     }
 
     /** Cancel (appends `churn` event). */
-    public function destroy(Subscription $subscription)
+    public function destroy(Request $request, int $subscription)
     {
-        $subscription = $this->subscriptions->cancel($subscription);
+        $subscription = $this->subscriptions->cancel($this->scoped($request, $subscription));
 
         return new SubscriptionResource($subscription->load(['customer', 'plan']));
     }

@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class SubscriptionEvent extends Model
 {
     protected $fillable = [
-        'subscription_id', 'customer_id', 'type',
+        'team_id', 'subscription_id', 'customer_id', 'type',
         'from_plan_id', 'to_plan_id', 'mrr_delta_cents', 'occurred_at',
     ];
 

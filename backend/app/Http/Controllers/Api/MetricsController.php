@@ -15,6 +15,6 @@ class MetricsController extends Controller
     {
         $period = $request->string('period')->value() ?: 'last_12';
 
-        return response()->json($this->metrics->forPeriod($period));
+        return response()->json($this->metrics->forPeriod($request->user()->team_id, $period));
     }
 }

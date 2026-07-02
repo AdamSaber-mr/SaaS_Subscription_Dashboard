@@ -18,7 +18,7 @@ class UpdateSubscriptionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'plan' => ['required', 'string', Rule::exists('plans', 'slug')],
+            'plan' => ['required', 'string', Rule::exists('plans', 'slug')->where('team_id', $this->user()->team_id)],
         ];
     }
 }

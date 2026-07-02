@@ -11,6 +11,7 @@ class CustomerFactory extends Factory
     public function definition(): array
     {
         return [
+            'team_id' => \App\Models\Team::factory(),
             'name' => fake()->unique()->company(),
             'email' => fake()->unique()->safeEmail(),
             'country' => 'United States',

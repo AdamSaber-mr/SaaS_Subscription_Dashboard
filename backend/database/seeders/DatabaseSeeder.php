@@ -15,19 +15,21 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        $team = \App\Models\Team::firstOrCreate(['name' => 'Northwind']);
+
         // Idempotent so re-seeding never trips the unique email constraint.
         // Both accounts use the factory default password: "password".
         User::updateOrCreate(
             ['email' => 'ava@northwind.test'],
-            ['name' => 'Ava Mercer', 'password' => 'password'],
+            ['name' => 'Ava Mercer', 'password' => 'password', 'team_id' => $team->id],
         );
         User::updateOrCreate(
             ['email' => 'adamsaber.db@gmail.com'],
-            ['name' => 'Adam Saber', 'password' => 'password'],
+            ['name' => 'Adam Saber', 'password' => 'password', 'team_id' => $team->id],
         );
 
         $this->call([
-            PlanSeeder::class,     // the four fixed tiers
+            PlanSeeder::class,     // the four default tiers for the demo team
             DemoDataSeeder::class, // 18-month demo dataset
         ]);
     }
