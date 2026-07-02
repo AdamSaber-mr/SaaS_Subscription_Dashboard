@@ -8,6 +8,7 @@ use App\Http\Resources\CustomerDetailResource;
 use App\Http\Resources\CustomerResource;
 use App\Models\Customer;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class CustomerController extends Controller
 {
@@ -35,17 +36,30 @@ class CustomerController extends Controller
             ));
         }
 
-        // Direct-column sorts; plan/mrr/status sorts join the subscription —
-        // TODO(impl): add those joins alongside the MetricsService work.
         $dir = $request->string('dir')->value() === 'asc' ? 'asc' : 'desc';
         $sort = $request->string('sort')->value();
-        $column = match ($sort) {
-            'name' => 'name',
-            'country' => 'country',
-            'signup' => 'signed_up_at',
-            default => 'signed_up_at',
+
+        // plan/mrr/status live on the subscription (+plan); sort via subqueries
+        // so the eager loads and pagination stay intact.
+        $subscriptions = fn () => DB::table('subscriptions')
+            ->whereColumn('subscriptions.customer_id', 'customers.id');
+
+        match ($sort) {
+            'name' => $query->orderBy('name', $dir),
+            'country' => $query->orderBy('country', $dir),
+            'status' => $query->orderBy($subscriptions()->select('status'), $dir),
+            'plan' => $query->orderBy(
+                $subscriptions()->join('plans', 'plans.id', '=', 'subscriptions.plan_id')->select('plans.sort_order'),
+                $dir,
+            ),
+            'mrr' => $query->orderBy(
+                $subscriptions()
+                    ->join('plans', 'plans.id', '=', 'subscriptions.plan_id')
+                    ->selectRaw("case when subscriptions.status = 'active' then plans.mrr_cents else 0 end"),
+                $dir,
+            ),
+            default => $query->orderBy('signed_up_at', $dir),
         };
-        $query->orderBy($column, $dir);
 
         return CustomerResource::collection($query->paginate(40));
     }

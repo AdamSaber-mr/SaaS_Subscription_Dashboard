@@ -32,12 +32,14 @@ class CustomerDetailResource extends JsonResource
             'email' => $this->email,
             'country' => $this->country,
             'status' => $sub?->status->value ?? 'churned',
+            'subscriptionId' => $sub?->id,
             'plan' => $plan ? ['id' => $plan->slug, 'name' => $plan->name] : null,
             'currentMrr' => $active && $plan ? $plan->mrr_cents / 100 : 0,
             'lifetimePaid' => $lifetimePaid,
             'signedUpAt' => $this->signed_up_at?->toDateString(),
             'timeline' => $this->events
-                ->sortByDesc('occurred_at')
+                // id desc breaks same-day ties chronologically (newest first)
+                ->sortBy([['occurred_at', 'desc'], ['id', 'desc']])
                 ->values()
                 ->map(fn ($e) => [
                     'type' => $e->type->value,
@@ -46,7 +48,7 @@ class CustomerDetailResource extends JsonResource
                     'date' => $e->occurred_at?->toDateString(),
                 ]),
             'invoices' => $this->invoices
-                ->sortByDesc('issued_at')
+                ->sortBy([['issued_at', 'desc'], ['id', 'desc']])
                 ->values()
                 ->map(fn ($iv) => [
                     'amount' => $iv->amount_cents / 100,

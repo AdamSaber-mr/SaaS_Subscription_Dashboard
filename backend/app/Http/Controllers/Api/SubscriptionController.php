@@ -28,6 +28,9 @@ class SubscriptionController extends Controller
             $query->whereHas('plan', fn ($q) => $q->where('slug', $plan));
         }
 
+        // Newest first, so a just-created subscription is visible right away.
+        $query->orderByDesc('started_at')->orderByDesc('id');
+
         return SubscriptionResource::collection($query->paginate(50));
     }
 
