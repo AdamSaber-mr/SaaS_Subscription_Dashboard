@@ -1,17 +1,37 @@
 # Revenue OS — SaaS Revenue Dashboard
 
 A Stripe/Mercury-style SaaS revenue dashboard. **Monorepo** with a React + Vite
-frontend and (soon) a Laravel API backend.
+frontend and a Laravel API backend.
 
 ```
 SaaS-Dashboard/
-├── frontend/   # React + Vite SPA (built — see frontend section below)
-└── backend/    # Laravel API (placeholder — not scaffolded yet)
+├── frontend/   # React + Vite SPA (see frontend section below)
+└── backend/    # Laravel 13 API (Sanctum token auth, SQLite, event-sourced metrics)
 ```
 
-> **Status:** frontend is built; data is simulated in the browser. The
-> **Laravel** backend in `backend/` will replace the data layer later
-> (see [Backend](#backend-laravel-later)).
+> **Status:** fully wired. The frontend authenticates against the Laravel API
+> and reads all data from it; the old in-browser simulation
+> (`src/lib/engine.js`) has been removed — its generator lives on as the
+> backend's `DemoDataSeeder` (bit-identical dataset, same seeded RNG).
+
+## Getting started
+
+```bash
+# backend — http://localhost:8000
+cd backend
+composer install
+cp .env.example .env && php artisan key:generate
+touch database/database.sqlite
+php artisan migrate --seed        # plans + demo user + 18-month demo dataset
+php artisan serve
+
+# frontend — http://localhost:5173
+cd frontend
+npm install
+npm run dev
+```
+
+Sign in with the demo account: **ava@northwind.test** / **password**.
 
 ## Features
 
@@ -28,32 +48,24 @@ SaaS-Dashboard/
 - **Light / dark theme** toggle, period filter (this month / last month /
   last quarter / 12 months), `prefers-reduced-motion` support, tabular numbers.
 
-## Getting started (frontend)
-
-```bash
-cd frontend
-npm install
-npm run dev      # http://localhost:5173
-npm run build    # production build → frontend/dist/
-npm run preview  # preview the production build
-```
-
 ## Frontend structure
 
 ```
 frontend/src/
 ├── main.jsx                  # entry — mounts <App> inside <DashboardProvider>
-├── App.jsx                   # shell: theme root + sidebar + topbar + route switch
+├── App.jsx                   # shell: login gate + theme root + sidebar + route switch
 ├── index.css                 # globals, scrollbar, entrance keyframes, Apex overrides
 ├── lib/
-│   ├── engine.js             # simulated data: plans, generation, aggregates, period metrics
-│   ├── format.js             # currency / percent / sparkline / avatar helpers
+│   ├── api.js                # JSON client (token in localStorage, 401 → login)
+│   ├── periods.js            # period filter options
+│   ├── badges.js             # shared plan/status badge styles
+│   ├── format.js             # currency / percent / date / sparkline / avatar helpers
 │   └── theme.js              # light & dark design tokens, chart colours, font
 ├── store/
-│   └── DashboardContext.jsx  # all UI state + lifecycle actions (single source of truth)
+│   └── DashboardContext.jsx  # auth + server data (fetch/refetch) + UI state + actions
 ├── hooks/
 │   ├── useCountUp.js         # rAF count-up that writes to the DOM (no re-render storm)
-│   └── usePeriodMetrics.js   # memoised period metrics from aggregates
+│   └── usePeriodMetrics.js   # adapts /api/metrics payload to flat page metrics
 ├── components/
 │   ├── Sidebar.jsx  Topbar.jsx  Modal.jsx
 │   ├── KpiCard.jsx  SegToggle.jsx  InfoTip.jsx
@@ -64,6 +76,7 @@ frontend/src/
 │       ├── FlowChart.jsx            # custom SVG Sankey
 │       └── CohortGrid.jsx           # retention heat-grid
 └── pages/
+    ├── Login.jsx
     ├── Dashboard.jsx  Insights.jsx
     ├── Customers.jsx  CustomerDetail.jsx
     ├── Plans.jsx      Subscriptions.jsx
@@ -71,26 +84,26 @@ frontend/src/
 
 ### How state & data flow
 
-`DashboardProvider` (React Context) holds **all** UI state (route, period, theme,
-filters, modal, …) and owns the dataset. The dataset is generated once into a
-ref; lifecycle actions mutate it in place and bump a version counter, which
-re-derives `aggregates` via `useMemo`. Pages read state with the `useDashboard`
-hook and compute their view models locally — no prop-drilling.
+`DashboardProvider` (React Context) owns auth (Sanctum token), all UI state
+(route, period, theme, filters, modal, …) and the server data. Effects fetch
+`/api/metrics`, `/api/customers` (server-side search/sort/pagination),
+`/api/customers/{id}`, `/api/subscriptions` and `/api/plans`; lifecycle
+actions POST/PATCH/DELETE and then refetch, so every page updates live.
 
-## Backend (Laravel, later)
+## Backend (Laravel)
 
-The UI talks to the simulated engine only through `src/lib/engine.js` and the
-`customers` array in `DashboardContext`. To wire up the real backend:
+Laravel 13 API under `backend/` — see `backend/docs/` for the data model and
+endpoint contract. Highlights:
 
-1. Build Laravel API endpoints that return customers / events / invoices in the
-   same shape `generateData()` produces.
-2. In `DashboardContext`, replace the `generateData()` call with a fetch to the
-   API (e.g. load into state on mount).
-3. Point the lifecycle actions (`doChangePlan`, `doCancel`, `doNewSub`) at the
-   corresponding API mutations instead of mutating the local array.
-
-The rest of the UI — `aggregates`, `periodMetrics`, charts and pages — stays
-unchanged.
+- **Event-sourced metrics**: every lifecycle change appends a
+  `subscription_events` row with a signed `mrr_delta_cents`;
+  `MetricsService` aggregates the log into KPIs, movements, trend, cohort
+  retention and plan mix per period.
+- **`DemoDataSeeder`** is a bit-exact PHP port of the old frontend generator
+  (same mulberry32 seed), ending at the current month.
+- **Auth**: Sanctum bearer tokens (`POST /api/login`), all data routes behind
+  `auth:sanctum`, login throttled, tokens expire after a week. CORS is
+  configured for the Vite origin (`FRONTEND_URL` in `.env`).
 
 ## Notes
 
