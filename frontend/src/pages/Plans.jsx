@@ -1,44 +1,44 @@
 import { useDashboard } from '../store/DashboardContext.jsx'
 import { usePeriodMetrics } from '../hooks/usePeriodMetrics.js'
-import { PLANS, PLAN_RAMP } from '../lib/engine.js'
 import { usd, pct1, hexA } from '../lib/format.js'
 
 export default function Plans() {
-  const { customers } = useDashboard()
+  const { plans, planRamp, metrics } = useDashboard()
   const { endMRR: totalMRR } = usePeriodMetrics()
 
-  const counts = PLANS.map((p) => customers.filter((c) => c.status === 'active' && c.planId === p.id).length)
+  const mix = Object.fromEntries(metrics.planMix.map((p) => [p.id, p]))
+  const counts = plans.map((p) => mix[p.id]?.customers ?? 0)
   const popIdx = counts.indexOf(Math.max(...counts))
 
-  const cards = PLANS.map((p, pi) => {
+  const cards = plans.map((p, pi) => {
     const cnt = counts[pi]
-    const mrr = cnt * p.mrr
+    const mrr = mix[p.id]?.mrr ?? 0
     const share = totalMRR ? mrr / totalMRR : 0
     const pop = pi === popIdx
     return {
       name: p.name,
       blurb: p.blurb,
-      price: p.interval === 'year' ? '$11,988' : '$' + p.price,
+      price: '$' + p.price.toLocaleString('en-US'),
       interval: p.interval === 'year' ? '/yr' : '/mo',
-      mrrNote: p.interval === 'year' ? '$999/mo recognized' : 'billed monthly',
+      mrrNote: p.interval === 'year' ? '$' + p.mrr.toLocaleString('en-US') + '/mo recognized' : 'billed monthly',
       customers: String(cnt),
       mrr: usd(mrr),
       shareStr: pct1(share) + ' of total revenue',
       pop,
-      ramp: PLAN_RAMP[p.id],
+      ramp: planRamp[p.id],
     }
   })
 
-  const stack = PLANS.map((p, pi) => {
-    const mrr = counts[pi] * p.mrr
+  const stack = plans.map((p) => {
+    const mrr = mix[p.id]?.mrr ?? 0
     const pct = totalMRR ? mrr / totalMRR : 0
-    return { name: p.name, pct: pct1(pct), pctNum: pct, ramp: PLAN_RAMP[p.id] }
+    return { name: p.name, pct: pct1(pct), pctNum: pct, ramp: planRamp[p.id] }
   })
 
-  const bars = PLANS.map((p, pi) => {
-    const mrr = counts[pi] * p.mrr
+  const bars = plans.map((p) => {
+    const mrr = mix[p.id]?.mrr ?? 0
     const pct = totalMRR ? mrr / totalMRR : 0
-    return { name: p.name, mrr: usd(mrr), pct: pct1(pct), pctNum: pct, ramp: PLAN_RAMP[p.id] }
+    return { name: p.name, mrr: usd(mrr), pct: pct1(pct), pctNum: pct, ramp: planRamp[p.id] }
   })
 
   return (

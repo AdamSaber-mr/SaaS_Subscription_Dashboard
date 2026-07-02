@@ -1,17 +1,16 @@
 import Chart from 'react-apexcharts'
 import { useDashboard } from '../../store/DashboardContext.jsx'
 import { chartColors, FONT } from '../../lib/theme.js'
-import { monthMeta, range, N } from '../../lib/engine.js'
 import { hexA } from '../../lib/format.js'
 import { tipHtml } from './MrrTrendChart.jsx'
 
 export default function ActiveCustomersChart() {
-  const { aggregates: A, theme, accent, period } = useDashboard()
+  const { metrics, theme, accent } = useDashboard()
+  const [s, e] = metrics.range
+  const months = metrics.trend.months
+  const monthsLong = metrics.trend.monthsLong
+  const series = metrics.trend.activeCustomers
   const c = chartColors(theme, accent)
-  const [s, e] = range(period)
-  const months = Array.from({ length: N }, (_, i) => monthMeta(i).short)
-  const monthsLong = Array.from({ length: N }, (_, i) => monthMeta(i).long)
-  const series = A.activeC.slice()
   const accentFade = hexA(accent, c.isLight ? 0.3 : 0.4)
   const cols = series.map((_, i) => (i >= s && i <= e ? accent : accentFade))
 

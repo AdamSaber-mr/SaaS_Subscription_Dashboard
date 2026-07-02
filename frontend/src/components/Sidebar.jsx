@@ -1,4 +1,5 @@
 import { useDashboard } from '../store/DashboardContext.jsx'
+import { initial } from '../lib/format.js'
 
 const NAV = [
   { id: 'dashboard', label: 'Dashboard', icon: 'M4 5h6v6H4zM14 5h6v6h-6zM14 14h6v5h-6zM4 14h6v5H4z' },
@@ -51,7 +52,7 @@ function NavButton({ item, active, onClick }) {
 }
 
 export default function Sidebar() {
-  const { route, companyName, theme, toggleTheme, go } = useDashboard()
+  const { route, companyName, theme, toggleTheme, go, user, logout } = useDashboard()
   const isActive = (id) => (id === 'customers' ? route === 'customers' || route === 'detail' : route === id)
 
   const themeLabel = theme === 'light' ? 'Dark mode' : 'Light mode'
@@ -147,12 +148,24 @@ export default function Sidebar() {
               flex: 'none',
             }}
           >
-            AV
+            {initial(user?.name || '?')}
           </div>
-          <div style={{ lineHeight: 1.15, minWidth: 0 }}>
-            <div style={{ fontSize: '12.5px', fontWeight: 500, color: 'var(--text,#15151b)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Ava Mercer</div>
-            <div style={{ fontSize: '11px', color: 'var(--text-3,#9a9aa6)' }}>Finance lead</div>
+          <div style={{ lineHeight: 1.15, minWidth: 0, flex: 1 }}>
+            <div style={{ fontSize: '12.5px', fontWeight: 500, color: 'var(--text,#15151b)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user?.name}</div>
+            <div style={{ fontSize: '11px', color: 'var(--text-3,#9a9aa6)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user?.email}</div>
           </div>
+          <button
+            onClick={logout}
+            title="Sign out"
+            aria-label="Sign out"
+            style={{ border: 'none', background: 'transparent', color: 'var(--text-3,#9a9aa6)', cursor: 'pointer', padding: '5px', borderRadius: '7px', display: 'flex' }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--neg,#e5484d)')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-3,#9a9aa6)')}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />
+            </svg>
+          </button>
         </div>
       </div>
     </aside>

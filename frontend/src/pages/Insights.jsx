@@ -1,6 +1,6 @@
 import { useDashboard } from '../store/DashboardContext.jsx'
 import { usePeriodMetrics } from '../hooks/usePeriodMetrics.js'
-import { PLANS, periodLabel } from '../lib/engine.js'
+import { periodLabel } from '../lib/periods.js'
 import { usd, usdShort, pct1 } from '../lib/format.js'
 
 function iconChip(kind) {
@@ -14,15 +14,14 @@ function iconChip(kind) {
 }
 
 export default function Insights() {
-  const { customers, period } = useDashboard()
+  const { metrics, period } = useDashboard()
   const M = usePeriodMetrics()
   const { newM, expM, conM, chuM, net, endMRR, endActive, newCust, chuCust, custChurn, nrr } = M
   const pl = periodLabel(period)
 
-  const topPlan = PLANS.map((p) => {
-    const cnt = customers.filter((c) => c.status === 'active' && c.planId === p.id).length
-    return { name: p.name, cnt, mrr: cnt * p.mrr }
-  }).sort((a, b) => b.mrr - a.mrr)[0]
+  const topPlan = metrics.planMix
+    .map((p) => ({ name: p.name, cnt: p.customers, mrr: p.mrr }))
+    .sort((a, b) => b.mrr - a.mrr)[0]
 
   const hero = {
     tag: net >= 0 ? 'Healthy growth' : 'Needs attention',

@@ -1,7 +1,6 @@
 import Chart from 'react-apexcharts'
 import { useDashboard } from '../../store/DashboardContext.jsx'
 import { chartColors, FONT } from '../../lib/theme.js'
-import { monthMeta, range, N } from '../../lib/engine.js'
 import { usd } from '../../lib/format.js'
 
 // Custom tooltip markup shared by the dashboard charts.
@@ -17,12 +16,12 @@ function tipHtml(label, val, color, c) {
 }
 
 export default function MrrTrendChart() {
-  const { aggregates: A, theme, accent, period } = useDashboard()
+  const { metrics, theme, accent } = useDashboard()
+  const [s, e] = metrics.range
+  const months = metrics.trend.months
+  const monthsLong = metrics.trend.monthsLong
+  const series = metrics.trend.mrr
   const c = chartColors(theme, accent)
-  const [s, e] = range(period)
-  const months = Array.from({ length: N }, (_, i) => monthMeta(i).short)
-  const monthsLong = Array.from({ length: N }, (_, i) => monthMeta(i).long)
-  const series = A.mrrEnd.map((v) => Math.round(v))
 
   const ann =
     s !== e

@@ -46,6 +46,22 @@ export function spark(arr) {
   )
 }
 
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+// '2025-03-04' → 'Mar 04, 2025'
+export function fmtDate(iso) {
+  if (!iso) return ''
+  const [y, m, d] = iso.split('-')
+  return MONTHS[Number(m) - 1] + ' ' + d + ', ' + y
+}
+
+// '2025-03-04' → "Mar '25"
+export function fmtMonth(iso) {
+  if (!iso) return ''
+  const [y, m] = iso.split('-')
+  return MONTHS[Number(m) - 1] + " '" + y.slice(2)
+}
+
 export function initial(n) {
   const w = n
     .replace(/[^A-Za-z ]/g, '')

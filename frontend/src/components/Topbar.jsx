@@ -1,5 +1,6 @@
 import { useDashboard } from '../store/DashboardContext.jsx'
-import { PERIODS } from '../lib/engine.js'
+import { PERIODS } from '../lib/periods.js'
+import SegToggle from './SegToggle.jsx'
 
 const TITLES = {
   dashboard: ['Overview', 'Your recurring revenue at a glance'],
@@ -36,31 +37,7 @@ export default function Topbar() {
         <div style={{ fontSize: '12.5px', color: 'var(--text-3,#9a9aa6)', marginTop: '1px' }}>{sub}</div>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <div style={{ display: 'flex', background: 'var(--surface-2,#f6f6f8)', border: '1px solid var(--border,#ececef)', borderRadius: '10px', padding: '3px', gap: '2px' }}>
-          {PERIODS.map(([id, label]) => {
-            const active = period === id
-            return (
-              <button
-                key={id}
-                onClick={() => setPeriod(id)}
-                style={{
-                  padding: '6px 11px',
-                  borderRadius: '7px',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontSize: '12px',
-                  fontWeight: active ? 550 : 450,
-                  whiteSpace: 'nowrap',
-                  background: active ? 'var(--surface)' : 'transparent',
-                  color: active ? 'var(--text)' : 'var(--text-2)',
-                  boxShadow: active ? 'var(--shadow)' : 'none',
-                }}
-              >
-                {label}
-              </button>
-            )
-          })}
-        </div>
+        <SegToggle options={PERIODS} value={period} onChange={setPeriod} />
         <button
           onClick={openNewSub}
           style={{

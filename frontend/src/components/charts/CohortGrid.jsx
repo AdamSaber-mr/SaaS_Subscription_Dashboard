@@ -1,32 +1,22 @@
 import { useDashboard } from '../../store/DashboardContext.jsx'
-import { monthMeta, N } from '../../lib/engine.js'
 import InfoTip from '../InfoTip.jsx'
 
 // % of each sign-up cohort still active, by months since signup.
 export default function CohortGrid() {
-  const { customers } = useDashboard()
-  const nCols = 9
-  const cohortStart = Math.max(0, N - nCols)
+  const { metrics } = useDashboard()
+  const { labels, sizes, grid } = metrics.cohort
+  const nCols = grid[0]?.length || 9
   const head = Array.from({ length: nCols }, (_, k) => (k === 0 ? 'Size' : 'M' + k))
 
-  const rows = []
-  for (let sm = cohortStart; sm < N; sm++) {
-    const cohort = customers.filter((c) => c.signupMonth === sm)
-    const size = cohort.length
-    const cells = []
-    for (let k = 0; k < nCols; k++) {
-      const at = sm + k
-      if (at > N - 1) {
-        cells.push({ label: '', empty: true })
-        continue
-      }
-      const active = cohort.filter((c) => !(c.status === 'churned' && c.churnMonth <= at)).length
-      const p = size ? active / size : 0
-      const txt = size ? (k === 0 ? size + '' : Math.round(p * 100) + '%') : '–'
-      cells.push({ label: txt, p })
-    }
-    rows.push({ label: monthMeta(sm).short, cells })
-  }
+  const rows = grid.map((row, ri) => ({
+    label: labels[ri],
+    cells: row.map((p, k) => {
+      if (p === null) return { label: '', empty: true }
+      const size = sizes[ri]
+      const txt = size ? (k === 0 ? String(size) : Math.round(p * 100) + '%') : '–'
+      return { label: txt, p }
+    }),
+  }))
 
   const gridCols = `84px repeat(${nCols},1fr)`
 

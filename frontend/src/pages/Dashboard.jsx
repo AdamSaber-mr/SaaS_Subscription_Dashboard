@@ -1,7 +1,7 @@
 import { useDashboard } from '../store/DashboardContext.jsx'
 import { usePeriodMetrics } from '../hooks/usePeriodMetrics.js'
-import { monthMeta, periodLabel, N } from '../lib/engine.js'
-import { usd, usdShort, pct1, delta, spark } from '../lib/format.js'
+import { periodLabel } from '../lib/periods.js'
+import { usd, pct1, delta, spark } from '../lib/format.js'
 import KpiCard from '../components/KpiCard.jsx'
 import SegToggle from '../components/SegToggle.jsx'
 import InfoTip from '../components/InfoTip.jsx'
@@ -40,24 +40,25 @@ function ChartCard({ title, tip, subtitle, endLabel, growthLabel, children }) {
 }
 
 export default function Dashboard() {
-  const { aggregates: A, period, movementViz, setMovementViz, dashLayout, setDashLayout, version } = useDashboard()
+  const { metrics, period, movementViz, setMovementViz, dashLayout, setDashLayout } = useDashboard()
   const M = usePeriodMetrics()
   const { newM, expM, conM, chuM, endMRR, endActive, newCust, net, nrr, quick, arpu, ltv, custChurn, revChurn } = M
+  const T = metrics.trend
 
   const mrrDelta = delta(endMRR, M.startMRR)
   const custDelta = delta(endActive, M.startActive)
-  const animDeps = [period, version]
+  const animDeps = [period, metrics]
 
   const kpis = [
-    { key: 'mrr', label: 'MRR', tip: 'Monthly Recurring Revenue — the steady income you collect every month from all active subscriptions.', value: Math.round(endMRR), format: (x) => usd(x), deltaStr: mrrDelta.str, deltaPos: mrrDelta.pos, sub: 'Monthly recurring revenue', valueColor: 'var(--text)', spark: spark(A.mrrEnd.slice(-12)) },
-    { key: 'arr', label: 'ARR', tip: 'Annual Run-Rate — your current monthly revenue projected across a full year (MRR × 12).', value: Math.round(endMRR * 12), format: (x) => usd(x), deltaStr: mrrDelta.str, deltaPos: mrrDelta.pos, sub: 'Annual run-rate', valueColor: 'var(--text)', spark: spark(A.mrrEnd.slice(-12).map((x) => x * 12)) },
-    { key: 'cust', label: 'Active customers', tip: 'The number of customers with a paid, active subscription right now.', value: endActive, format: (x) => Math.round(x).toLocaleString('en-US'), deltaStr: custDelta.str, deltaPos: custDelta.pos, sub: newCust + ' new this period', valueColor: 'var(--text)', spark: spark(A.activeC.slice(-12)) },
-    { key: 'net', label: 'Net new MRR', tip: 'How much your monthly revenue grew or shrank this period: new + upgrades − downgrades − cancellations.', value: Math.round(net), format: (x) => (x >= 0 ? '+' : '') + usd(x), deltaStr: periodLabel(period), deltaNeutral: true, sub: 'New + expansion − churn', valueColor: net >= 0 ? 'var(--pos)' : 'var(--neg)', spark: spark(A.newM.slice(-12).map((x, i) => x + A.expM.slice(-12)[i] - A.conM.slice(-12)[i] - A.chuM.slice(-12)[i])) },
+    { key: 'mrr', label: 'MRR', tip: 'Monthly Recurring Revenue — the steady income you collect every month from all active subscriptions.', value: Math.round(endMRR), format: (x) => usd(x), deltaStr: mrrDelta.str, deltaPos: mrrDelta.pos, sub: 'Monthly recurring revenue', valueColor: 'var(--text)', spark: spark(T.mrr.slice(-12)) },
+    { key: 'arr', label: 'ARR', tip: 'Annual Run-Rate — your current monthly revenue projected across a full year (MRR × 12).', value: Math.round(endMRR * 12), format: (x) => usd(x), deltaStr: mrrDelta.str, deltaPos: mrrDelta.pos, sub: 'Annual run-rate', valueColor: 'var(--text)', spark: spark(T.mrr.slice(-12).map((x) => x * 12)) },
+    { key: 'cust', label: 'Active customers', tip: 'The number of customers with a paid, active subscription right now.', value: endActive, format: (x) => Math.round(x).toLocaleString('en-US'), deltaStr: custDelta.str, deltaPos: custDelta.pos, sub: newCust + ' new this period', valueColor: 'var(--text)', spark: spark(T.activeCustomers.slice(-12)) },
+    { key: 'net', label: 'Net new MRR', tip: 'How much your monthly revenue grew or shrank this period: new + upgrades − downgrades − cancellations.', value: Math.round(net), format: (x) => (x >= 0 ? '+' : '') + usd(x), deltaStr: periodLabel(period), deltaNeutral: true, sub: 'New + expansion − churn', valueColor: net >= 0 ? 'var(--pos)' : 'var(--neg)', spark: spark(T.newM.slice(-12).map((x, i) => x + T.expM.slice(-12)[i] - T.conM.slice(-12)[i] - T.chuM.slice(-12)[i])) },
   ]
 
   const statTiles = [
     { label: 'Net revenue retention', value: pct1(nrr), color: nrr >= 1 ? 'var(--pos)' : 'var(--neg)', hint: nrr >= 1 ? 'Expanding base' : 'Contracting base', tip: 'Of the revenue you had at the start, how much you kept and grew — counting upgrades, losing cancellations. Above 100% means existing customers spend more over time.' },
-    { label: 'Quick ratio', value: quick.toFixed(1), color: quick >= 4 ? 'var(--pos)' : 'var(--text)', hint: '(New+Exp) / (Contr+Churn)', tip: 'Growth efficiency: revenue gained (new + upgrades) divided by revenue lost (downgrades + cancellations). Higher is healthier; above 4 is strong.' },
+    { label: 'Quick ratio', value: quick === null ? '∞' : quick.toFixed(1), color: quick === null || quick >= 4 ? 'var(--pos)' : 'var(--text)', hint: '(New+Exp) / (Contr+Churn)', tip: 'Growth efficiency: revenue gained (new + upgrades) divided by revenue lost (downgrades + cancellations). Higher is healthier; above 4 is strong. ∞ means nothing was lost this period.' },
     { label: 'ARPU', value: usd(arpu), color: 'var(--text)', hint: 'Per active customer', tip: 'Average Revenue Per User — total monthly revenue divided by your active customers.' },
     { label: 'LTV', value: usd(ltv), color: 'var(--text)', hint: 'ARPU ÷ monthly churn', tip: 'Lifetime Value — the estimated total revenue from a customer before they cancel (ARPU ÷ monthly churn rate).' },
     { label: 'Customer churn', value: pct1(custChurn), color: 'var(--neg)', hint: 'avg / month', tip: 'The share of customers who cancel each month, on average. Lower is better.' },
@@ -84,8 +85,9 @@ export default function Dashboard() {
   const analyst = dashLayout === 'analyst'
   const dord = analyst ? { kpis: 1, stats: 2, mov: 3, charts: 4, cohort: 5 } : { kpis: 1, charts: 2, mov: 3, stats: 4, cohort: 5 }
 
-  const trendGrowth = '+' + usd(A.mrrEnd[N - 1] - A.mrrEnd[Math.max(0, N - 13)]) + ' / yr'
-  const custGrowth = '+' + (A.activeC[N - 1] - A.activeC[Math.max(0, N - 13)]) + ' / yr'
+  const last = T.mrr.length - 1
+  const trendGrowth = '+' + usd(T.mrr[last] - T.mrr[Math.max(0, last - 12)]) + ' / yr'
+  const custGrowth = '+' + (T.activeCustomers[last] - T.activeCustomers[Math.max(0, last - 12)]) + ' / yr'
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -103,8 +105,8 @@ export default function Dashboard() {
 
       {/* KPI ROW */}
       <div style={{ order: dord.kpis, display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(195px,1fr))', gap: '16px' }}>
-        {kpis.map((k) => (
-          <KpiCard key={k.key} {...k} animDeps={animDeps} />
+        {kpis.map(({ key, ...k }) => (
+          <KpiCard key={key} {...k} animDeps={animDeps} />
         ))}
       </div>
 
@@ -123,7 +125,7 @@ export default function Dashboard() {
           title="Active customers"
           tip="How many paying customers you had at the end of each month, after subtracting anyone who cancelled."
           subtitle="Net of churn"
-          endLabel={String(A.activeC[N - 1])}
+          endLabel={String(T.activeCustomers[last])}
           growthLabel={custGrowth}
         >
           <ActiveCustomersChart />

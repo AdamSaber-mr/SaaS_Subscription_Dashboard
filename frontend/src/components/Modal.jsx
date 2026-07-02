@@ -1,6 +1,80 @@
+import { useEffect, useRef } from 'react'
 import { useDashboard } from '../store/DashboardContext.jsx'
-import { PLANS, plan } from '../lib/engine.js'
 import { usd } from '../lib/format.js'
+
+// Accessible dialog shell: focus moves in on open, is trapped while open
+// (Tab cycles), Escape closes, and focus returns to the opener on close.
+function DialogShell({ onClose, children }) {
+  const boxRef = useRef(null)
+
+  useEffect(() => {
+    const opener = document.activeElement
+    const box = boxRef.current
+    const focusables = () =>
+      [...box.querySelectorAll('button, input, [tabindex]:not([tabindex="-1"])')].filter((el) => !el.disabled)
+    focusables()[0]?.focus()
+
+    const onKey = (e) => {
+      if (e.key === 'Escape') {
+        onClose()
+        return
+      }
+      if (e.key !== 'Tab') return
+      const els = focusables()
+      if (!els.length) return
+      const first = els[0]
+      const last = els[els.length - 1]
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault()
+        last.focus()
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault()
+        first.focus()
+      }
+    }
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('keydown', onKey)
+      opener?.focus?.()
+    }
+  }, [onClose])
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 100,
+        background: 'rgba(8,8,12,0.4)',
+        backdropFilter: 'blur(3px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '24px',
+      }}
+    >
+      <div
+        ref={boxRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modal-title"
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          width: '100%',
+          maxWidth: '440px',
+          background: 'var(--surface,#fff)',
+          border: '1px solid var(--border,#ececef)',
+          borderRadius: '18px',
+          boxShadow: '0 24px 60px rgba(8,8,12,0.28)',
+          overflow: 'hidden',
+        }}
+      >
+        {children}
+      </div>
+    </div>
+  )
+}
 
 function PlanOption({ p, active, onClick }) {
   return (
@@ -23,7 +97,9 @@ function PlanOption({ p, active, onClick }) {
       <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '1px' }}>
         <span style={{ fontSize: '13px', fontWeight: 550 }}>{p.name}</span>
         <span style={{ fontSize: '11px', color: 'var(--text-3,#9a9aa6)' }}>
-          {p.interval === 'year' ? '$11,988/yr · $999 MRR' : '$' + p.price + '/mo'}
+          {p.interval === 'year'
+            ? '$' + p.price.toLocaleString('en-US') + '/yr · $' + p.mrr.toLocaleString('en-US') + ' MRR'
+            : '$' + p.price + '/mo'}
         </span>
       </span>
       <span
@@ -42,13 +118,12 @@ function PlanOption({ p, active, onClick }) {
 
 export default function Modal() {
   const {
-    modal, modalForm, setModalForm, customers,
+    modal, modalForm, setModalForm, plans, actionBusy,
     closeModal, doChangePlan, doCancel, doNewSub,
   } = useDashboard()
 
   if (!modal) return null
 
-  const target = modal.id ? customers.find((c) => c.id === modal.id) : null
   const selectPlan = (pid) => setModalForm((f) => ({ ...f, planId: pid }))
 
   let title = '',
@@ -64,7 +139,7 @@ export default function Modal() {
         {modal.kind === 'change' ? 'Select a new plan' : 'Choose a plan'}
       </label>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        {PLANS.map((p) => (
+        {plans.map((p) => (
           <PlanOption key={p.id} p={p} active={modalForm.planId === p.id} onClick={() => selectPlan(p.id)} />
         ))}
       </div>
@@ -73,22 +148,22 @@ export default function Modal() {
 
   if (modal.kind === 'change') {
     title = 'Change plan'
-    sub = target ? target.name : ''
+    sub = modal.name || ''
     confirmLabel = 'Update plan'
-    onConfirm = () => doChangePlan(modal.id, modalForm.planId)
+    onConfirm = doChangePlan
     body = planList
   } else if (modal.kind === 'cancel') {
     title = 'Cancel subscription'
-    sub = target ? target.name : ''
+    sub = modal.name || ''
     confirmLabel = 'Confirm cancellation'
     confirmBg = 'var(--neg)'
-    onConfirm = () => doCancel(modal.id)
+    onConfirm = doCancel
     body = (
       <div style={{ fontSize: '13px', color: 'var(--text-2,#6b6b78)', lineHeight: 1.5 }}>
         {'This will cancel ' +
-          (target ? target.name : 'this customer') +
+          (modal.name || 'this customer') +
           '’s subscription effective this month. Their ' +
-          usd(target ? plan(target.planId).mrr : 0) +
+          usd(modal.mrr || 0) +
           ' MRR will move to churned, lowering net new MRR for the current period.'}
       </div>
     )
@@ -123,34 +198,9 @@ export default function Modal() {
   }
 
   return (
-    <div
-      onClick={closeModal}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 100,
-        background: 'rgba(8,8,12,0.4)',
-        backdropFilter: 'blur(3px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '24px',
-      }}
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          width: '100%',
-          maxWidth: '440px',
-          background: 'var(--surface,#fff)',
-          border: '1px solid var(--border,#ececef)',
-          borderRadius: '18px',
-          boxShadow: '0 24px 60px rgba(8,8,12,0.28)',
-          overflow: 'hidden',
-        }}
-      >
+    <DialogShell onClose={closeModal}>
         <div style={{ padding: '20px 22px 14px', borderBottom: '1px solid var(--border,#ececef)' }}>
-          <div style={{ fontSize: '16px', fontWeight: 600, letterSpacing: '-0.01em', color: 'var(--text,#15151b)' }}>{title}</div>
+          <div id="modal-title" style={{ fontSize: '16px', fontWeight: 600, letterSpacing: '-0.01em', color: 'var(--text,#15151b)' }}>{title}</div>
           <div style={{ fontSize: '12.5px', color: 'var(--text-3,#9a9aa6)', marginTop: '2px' }}>{sub}</div>
         </div>
         <div style={{ padding: '20px 22px' }}>{body}</div>
@@ -172,6 +222,7 @@ export default function Modal() {
           </button>
           <button
             onClick={onConfirm}
+            disabled={actionBusy}
             style={{
               padding: '9px 16px',
               borderRadius: '10px',
@@ -180,13 +231,13 @@ export default function Modal() {
               color: '#fff',
               fontSize: '13px',
               fontWeight: 550,
-              cursor: 'pointer',
+              cursor: actionBusy ? 'default' : 'pointer',
+              opacity: actionBusy ? 0.7 : 1,
             }}
           >
-            {confirmLabel}
+            {actionBusy ? 'Working…' : confirmLabel}
           </button>
         </div>
-      </div>
-    </div>
+    </DialogShell>
   )
 }

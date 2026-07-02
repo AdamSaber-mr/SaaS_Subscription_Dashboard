@@ -1,39 +1,32 @@
 import { useDashboard } from '../store/DashboardContext.jsx'
-import { PLANS, plan, PLAN_RAMP, monthMeta } from '../lib/engine.js'
-import { usd, initial, avatarStyle } from '../lib/format.js'
-import { planBadge } from './Customers.jsx'
+import { usePeriodMetrics } from '../hooks/usePeriodMetrics.js'
+import { usd, initial, avatarStyle, fmtMonth } from '../lib/format.js'
+import { planBadge } from '../lib/badges.js'
+import StatCard from '../components/StatCard.jsx'
 
 const GRID = '2fr 1.2fr 1fr 1fr 1.4fr'
 
 export default function Subscriptions() {
-  const { customers, subPlanFilter, setSubPlanFilter, openChangePlan, openCancel } = useDashboard()
+  const { plans, planRamp, maxPlanMrr, metrics, subscriptionList, subPlanFilter, setSubPlanFilter, openChangePlan, openCancel } = useDashboard()
+  const { endMRR, endActive } = usePeriodMetrics()
 
-  const allActive = customers.filter((c) => c.status === 'active')
-  const totalMRR = allActive.reduce((a, c) => a + plan(c.planId).mrr, 0)
-  const annualCount = allActive.filter((c) => plan(c.planId).interval === 'year').length
+  const annualCount = metrics.planMix.filter((p) => p.interval === 'year').reduce((a, p) => a + p.customers, 0)
   const stats = [
-    { label: 'Active subscriptions', value: String(allActive.length), sub: 'currently billing', color: 'var(--text)' },
-    { label: 'Total MRR', value: usd(totalMRR), sub: 'recurring per month', color: 'var(--accent)' },
-    { label: 'Average MRR', value: usd(allActive.length ? totalMRR / allActive.length : 0), sub: 'per subscription', color: 'var(--text)' },
+    { label: 'Active subscriptions', value: String(endActive), sub: 'currently billing', color: 'var(--text)' },
+    { label: 'Total MRR', value: usd(endMRR), sub: 'recurring per month', color: 'var(--accent)' },
+    { label: 'Average MRR', value: usd(endActive ? endMRR / endActive : 0), sub: 'per subscription', color: 'var(--text)' },
     { label: 'On annual billing', value: String(annualCount), sub: 'paid yearly upfront', color: 'var(--text)' },
   ]
 
-  const chips = [['all', 'All plans']].concat(PLANS.map((p) => [p.id, p.name]))
-
-  let subs = allActive.slice()
-  if (subPlanFilter !== 'all') subs = subs.filter((c) => c.planId === subPlanFilter)
-  subs.sort((a, b) => plan(b.planId).mrr - plan(a.planId).mrr)
-  const rows = subs.slice(0, 50)
+  const chips = [['all', 'All plans']].concat(plans.map((p) => [p.id, p.name]))
+  const rows = subscriptionList?.items ?? []
+  const total = subscriptionList?.total ?? 0
 
   return (
     <div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(160px,1fr))', gap: '14px', marginBottom: '16px' }}>
         {stats.map((s, i) => (
-          <div key={i} style={{ background: 'var(--surface,#fff)', border: '1px solid var(--border,#ececef)', borderRadius: '14px', padding: '15px 16px', boxShadow: 'var(--shadow)' }}>
-            <div style={{ fontSize: '11px', color: 'var(--text-2,#6b6b78)', fontWeight: 500 }}>{s.label}</div>
-            <div style={{ fontSize: '21px', fontWeight: 600, letterSpacing: '-0.01em', marginTop: '6px', color: s.color, fontVariantNumeric: 'tabular-nums' }}>{s.value}</div>
-            <div style={{ fontSize: '10.5px', color: 'var(--text-3,#9a9aa6)', marginTop: '2px' }}>{s.sub}</div>
-          </div>
+          <StatCard key={i} {...s} />
         ))}
       </div>
 
@@ -70,34 +63,34 @@ export default function Subscriptions() {
           <span>Started</span>
           <span style={{ textAlign: 'right' }}>Actions</span>
         </div>
-        {rows.map((c) => (
-          <div key={c.id} style={{ display: 'grid', gridTemplateColumns: GRID, gap: '14px', padding: '12px 20px', borderBottom: '1px solid var(--border,#ececef)', alignItems: 'center' }}>
+        {rows.map((s) => (
+          <div key={s.id} style={{ display: 'grid', gridTemplateColumns: GRID, gap: '14px', padding: '12px 20px', borderBottom: '1px solid var(--border,#ececef)', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '11px', minWidth: 0 }}>
-              <div style={avatarStyle(c.name, 30)}>{initial(c.name)}</div>
-              <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text,#15151b)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.name}</span>
+              <div style={avatarStyle(s.customer.name, 30)}>{initial(s.customer.name)}</div>
+              <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text,#15151b)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.customer.name}</span>
             </div>
             <div>
-              <span style={planBadge(c.planId)}>{plan(c.planId).name}</span>
+              <span style={planBadge(planRamp[s.plan.id])}>{s.plan.name}</span>
             </div>
             <div style={{ fontSize: '13px', fontWeight: 550, color: 'var(--text,#15151b)', fontVariantNumeric: 'tabular-nums' }}>
-              {usd(plan(c.planId).mrr)}
+              {usd(s.mrr)}
               <div style={{ height: '3px', borderRadius: '2px', background: 'var(--surface-2,#f6f6f8)', marginTop: '5px', overflow: 'hidden' }}>
-                <div style={{ width: Math.max(6, Math.round((plan(c.planId).mrr / 999) * 100)) + '%', height: '100%', borderRadius: '2px', background: PLAN_RAMP[c.planId] }} />
+                <div style={{ width: Math.max(6, Math.round((s.mrr / maxPlanMrr) * 100)) + '%', height: '100%', borderRadius: '2px', background: planRamp[s.plan.id] }} />
               </div>
             </div>
             <div style={{ fontSize: '12.5px', color: 'var(--text-2,#6b6b78)', fontVariantNumeric: 'tabular-nums' }}>
-              {monthMeta(c.signupMonth).short}
-              <div style={{ fontSize: '10.5px', color: 'var(--text-3,#9a9aa6)' }}>{plan(c.planId).interval === 'year' ? 'Annual' : 'Monthly'}</div>
+              {fmtMonth(s.startedAt)}
+              <div style={{ fontSize: '10.5px', color: 'var(--text-3,#9a9aa6)' }}>{s.interval === 'year' ? 'Annual' : 'Monthly'}</div>
             </div>
             <div style={{ display: 'flex', gap: '7px', justifyContent: 'flex-end' }}>
               <button
-                onClick={() => openChangePlan(c.id, c.planId)}
+                onClick={() => openChangePlan({ subId: s.id, name: s.customer.name, planId: s.plan.id, mrr: s.mrr })}
                 style={{ padding: '6px 11px', borderRadius: '8px', border: '1px solid var(--border-strong,#e0e0e6)', background: 'var(--surface,#fff)', color: 'var(--text,#15151b)', fontSize: '11.5px', fontWeight: 500, cursor: 'pointer' }}
               >
                 Change
               </button>
               <button
-                onClick={() => openCancel(c.id)}
+                onClick={() => openCancel({ subId: s.id, name: s.customer.name, mrr: s.mrr })}
                 style={{ padding: '6px 11px', borderRadius: '8px', border: '1px solid var(--border-strong,#e0e0e6)', background: 'var(--surface,#fff)', color: 'var(--neg,#e5484d)', fontSize: '11.5px', fontWeight: 500, cursor: 'pointer' }}
               >
                 Cancel
@@ -105,7 +98,7 @@ export default function Subscriptions() {
             </div>
           </div>
         ))}
-        <div style={{ padding: '12px 20px', fontSize: '11.5px', color: 'var(--text-3,#9a9aa6)' }}>Showing {rows.length} of {subs.length} active subscriptions</div>
+        <div style={{ padding: '12px 20px', fontSize: '11.5px', color: 'var(--text-3,#9a9aa6)' }}>Showing {rows.length} of {total} active subscriptions</div>
       </div>
     </div>
   )
