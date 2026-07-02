@@ -8,6 +8,7 @@ export default function FlowChart({ m, net }) {
   const { theme, accent } = useDashboard()
   const colors = chartColors(theme, accent)
   const isLight = colors.isLight
+  const animate = !window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
   const fIn = [
     { label: 'New customers', v: m.newM },
@@ -75,7 +76,7 @@ export default function FlowChart({ m, net }) {
         <g key={i}>
           <path d={rb.ribbon} fill={rb.fill} fillOpacity="0.82" />
           <path d={rb.line} fill="none" stroke="#ffffff" strokeOpacity={rb.lineOpacity} strokeWidth="2.5" strokeDasharray="2 10" strokeLinecap="round">
-            <animate attributeName="stroke-dashoffset" from="24" to="0" dur="1.1s" repeatCount="indefinite" />
+            {animate && <animate attributeName="stroke-dashoffset" from="24" to="0" dur="1.1s" repeatCount="indefinite" />}
           </path>
         </g>
       ))}
