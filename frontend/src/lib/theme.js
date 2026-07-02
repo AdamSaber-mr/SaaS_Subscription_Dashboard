@@ -55,6 +55,20 @@ export function rootStyle(theme, accent) {
   return tk
 }
 
+// Ordinal plan ramp (starter → enterprise), one hue, light→dark. Validated
+// per mode with the dataviz palette checker: every step clears the 2:1
+// surface-contrast floor and adjacent steps stay distinguishable. The dark
+// ramp is its own set of steps (higher tier = further from the dark surface),
+// not a flipped copy of the light one.
+export const PLAN_RAMPS = {
+  light: { starter: '#AC9BE6', growth: '#8E77DB', scale: '#6E56CF', enterprise: '#4B3494' },
+  dark: { starter: '#6E56CF', growth: '#8A70DC', scale: '#AB97EA', enterprise: '#CEC3F2' },
+}
+
+export function planRampFor(theme) {
+  return PLAN_RAMPS[theme === 'light' ? 'light' : 'dark']
+}
+
 // Resolved (non-variable) colours for ApexCharts and SVG, which can't read CSS vars reliably.
 export function chartColors(theme, accent) {
   const isLight = theme === 'light'
