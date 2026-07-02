@@ -1,6 +1,8 @@
 import { createContext, useContext, useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { api, getToken, setToken, clearToken } from '../lib/api.js'
+import { planRampFor } from '../lib/theme.js'
+import { DEFAULT_LANG, LANGS, makeT } from '../lib/i18n.js'
 
 const DashboardContext = createContext(null)
 
@@ -35,6 +37,12 @@ export function DashboardProvider({ children }) {
     setUser(res.user)
   }, [])
 
+  const register = useCallback(async ({ name, company, email, password }) => {
+    const res = await api.post('/register', { name, company, email, password })
+    setToken(res.token)
+    setUser(res.user)
+  }, [])
+
   const logout = useCallback(async () => {
     try {
       await api.post('/logout')
@@ -55,6 +63,15 @@ export function DashboardProvider({ children }) {
   // --- UI state ----------------------------------------------------------------
   const [period, setPeriodState] = useState(() => store.get('period', 'last_12'))
   const [theme, setTheme] = useState(() => store.get('theme', 'light'))
+  const [lang, setLangState] = useState(() => {
+    const saved = store.get('lang', DEFAULT_LANG)
+    return LANGS.includes(saved) ? saved : DEFAULT_LANG
+  })
+  const t = useMemo(() => makeT(lang), [lang])
+  const setLang = useCallback((l) => {
+    setLangState(l)
+    store.set('lang', l)
+  }, [])
   const [movementViz, setMovementViz] = useState('bars')
   const [dashLayout, setDashLayout] = useState('spacious')
   const [search, setSearchState] = useState('')
@@ -67,7 +84,7 @@ export function DashboardProvider({ children }) {
   const [modalForm, setModalForm] = useState({ name: '', planId: 'growth' })
 
   const accent = '#6E56CF'
-  const companyName = 'Northwind'
+  const companyName = user?.team?.name || 'Revenue OS'
 
   const setPeriod = useCallback((p) => {
     setPeriodState(p)
@@ -222,7 +239,11 @@ export function DashboardProvider({ children }) {
 
   // --- derived plan helpers -----------------------------------------------------
   const planMap = useMemo(() => Object.fromEntries((plans || []).map((p) => [p.id, p])), [plans])
-  const planRamp = useMemo(() => Object.fromEntries((plans || []).map((p) => [p.id, p.rampColor])), [plans])
+  // Theme-aware ordinal ramp; the API's rampColor is the fallback for unknown slugs.
+  const planRamp = useMemo(() => {
+    const ramp = planRampFor(theme)
+    return Object.fromEntries((plans || []).map((p) => [p.id, ramp[p.id] || p.rampColor]))
+  }, [plans, theme])
   const maxPlanMrr = useMemo(() => Math.max(1, ...(plans || []).map((p) => p.mrr)), [plans])
 
   const booted = !!(plans && metrics)
@@ -230,11 +251,13 @@ export function DashboardProvider({ children }) {
   const value = useMemo(
     () => ({
       // auth
-      user, authChecking, login, logout,
+      user, authChecking, login, register, logout,
       // data
       plans, planMap, planRamp, maxPlanMrr, metrics, customerList, customerDetail,
       subscriptionList, booted, error, setError, actionBusy,
       accent, companyName,
+      // i18n
+      lang, setLang, t,
       // state
       route, period, theme, movementViz, dashLayout, search,
       sortKey, sortDir, statusFilter, page, subPlanFilter, selectedCustomerId,
@@ -248,9 +271,10 @@ export function DashboardProvider({ children }) {
       openNewSub, openChangePlan, openCancel, closeModal,
     }),
     [
-      user, authChecking, login, logout,
+      user, authChecking, login, register, logout,
       plans, planMap, planRamp, maxPlanMrr, metrics, customerList, customerDetail,
       subscriptionList, booted, error, actionBusy,
+      lang, setLang, t,
       route, period, theme, movementViz, dashLayout, search,
       sortKey, sortDir, statusFilter, page, subPlanFilter, selectedCustomerId,
       modal, modalForm,

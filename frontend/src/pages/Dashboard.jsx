@@ -1,6 +1,5 @@
 import { useDashboard } from '../store/DashboardContext.jsx'
 import { usePeriodMetrics } from '../hooks/usePeriodMetrics.js'
-import { periodLabel } from '../lib/periods.js'
 import { usd, pct1, delta, spark } from '../lib/format.js'
 import KpiCard from '../components/KpiCard.jsx'
 import SegToggle from '../components/SegToggle.jsx'
@@ -40,45 +39,46 @@ function ChartCard({ title, tip, subtitle, endLabel, growthLabel, children }) {
 }
 
 export default function Dashboard() {
-  const { metrics, period, movementViz, setMovementViz, dashLayout, setDashLayout } = useDashboard()
+  const { metrics, period, movementViz, setMovementViz, dashLayout, setDashLayout, t, user, companyName, openNewSub } = useDashboard()
   const M = usePeriodMetrics()
   const { newM, expM, conM, chuM, endMRR, endActive, newCust, net, nrr, quick, arpu, ltv, custChurn, revChurn } = M
   const T = metrics.trend
+  const periodIn = t('periodIn.' + period)
 
   const mrrDelta = delta(endMRR, M.startMRR)
   const custDelta = delta(endActive, M.startActive)
   const animDeps = [period, metrics]
 
   const kpis = [
-    { key: 'mrr', label: 'MRR', tip: 'Monthly Recurring Revenue — the steady income you collect every month from all active subscriptions.', value: Math.round(endMRR), format: (x) => usd(x), deltaStr: mrrDelta.str, deltaPos: mrrDelta.pos, sub: 'Monthly recurring revenue', valueColor: 'var(--text)', spark: spark(T.mrr.slice(-12)) },
-    { key: 'arr', label: 'ARR', tip: 'Annual Run-Rate — your current monthly revenue projected across a full year (MRR × 12).', value: Math.round(endMRR * 12), format: (x) => usd(x), deltaStr: mrrDelta.str, deltaPos: mrrDelta.pos, sub: 'Annual run-rate', valueColor: 'var(--text)', spark: spark(T.mrr.slice(-12).map((x) => x * 12)) },
-    { key: 'cust', label: 'Active customers', tip: 'The number of customers with a paid, active subscription right now.', value: endActive, format: (x) => Math.round(x).toLocaleString('en-US'), deltaStr: custDelta.str, deltaPos: custDelta.pos, sub: newCust + ' new this period', valueColor: 'var(--text)', spark: spark(T.activeCustomers.slice(-12)) },
-    { key: 'net', label: 'Net new MRR', tip: 'How much your monthly revenue grew or shrank this period: new + upgrades − downgrades − cancellations.', value: Math.round(net), format: (x) => (x >= 0 ? '+' : '') + usd(x), deltaStr: periodLabel(period), deltaNeutral: true, sub: 'New + expansion − churn', valueColor: net >= 0 ? 'var(--pos)' : 'var(--neg)', spark: spark(T.newM.slice(-12).map((x, i) => x + T.expM.slice(-12)[i] - T.conM.slice(-12)[i] - T.chuM.slice(-12)[i])) },
+    { key: 'mrr', label: t('dash.mrr'), tip: t('dash.mrrTip'), value: Math.round(endMRR), format: (x) => usd(x), deltaStr: mrrDelta.str, deltaPos: mrrDelta.pos, sub: t('dash.mrrSub'), valueColor: 'var(--text)', spark: spark(T.mrr.slice(-12)) },
+    { key: 'arr', label: t('dash.arr'), tip: t('dash.arrTip'), value: Math.round(endMRR * 12), format: (x) => usd(x), deltaStr: mrrDelta.str, deltaPos: mrrDelta.pos, sub: t('dash.arrSub'), valueColor: 'var(--text)', spark: spark(T.mrr.slice(-12).map((x) => x * 12)) },
+    { key: 'cust', label: t('dash.activeCustomers'), tip: t('dash.activeTip'), value: endActive, format: (x) => Math.round(x).toLocaleString('en-US'), deltaStr: custDelta.str, deltaPos: custDelta.pos, sub: t('dash.newThisPeriod', { n: newCust }), valueColor: 'var(--text)', spark: spark(T.activeCustomers.slice(-12)) },
+    { key: 'net', label: t('dash.netNewMrr'), tip: t('dash.netTip'), value: Math.round(net), format: (x) => (x >= 0 ? '+' : '') + usd(x), deltaStr: t('period.' + period), deltaNeutral: true, sub: t('dash.netSub'), valueColor: net >= 0 ? 'var(--pos)' : 'var(--neg)', spark: spark(T.newM.slice(-12).map((x, i) => x + T.expM.slice(-12)[i] - T.conM.slice(-12)[i] - T.chuM.slice(-12)[i])) },
   ]
 
   const statTiles = [
-    { label: 'Net revenue retention', value: pct1(nrr), color: nrr >= 1 ? 'var(--pos)' : 'var(--neg)', hint: nrr >= 1 ? 'Expanding base' : 'Contracting base', tip: 'Of the revenue you had at the start, how much you kept and grew — counting upgrades, losing cancellations. Above 100% means existing customers spend more over time.' },
-    { label: 'Quick ratio', value: quick === null ? '∞' : quick.toFixed(1), color: quick === null || quick >= 4 ? 'var(--pos)' : 'var(--text)', hint: '(New+Exp) / (Contr+Churn)', tip: 'Growth efficiency: revenue gained (new + upgrades) divided by revenue lost (downgrades + cancellations). Higher is healthier; above 4 is strong. ∞ means nothing was lost this period.' },
-    { label: 'ARPU', value: usd(arpu), color: 'var(--text)', hint: 'Per active customer', tip: 'Average Revenue Per User — total monthly revenue divided by your active customers.' },
-    { label: 'LTV', value: usd(ltv), color: 'var(--text)', hint: 'ARPU ÷ monthly churn', tip: 'Lifetime Value — the estimated total revenue from a customer before they cancel (ARPU ÷ monthly churn rate).' },
-    { label: 'Customer churn', value: pct1(custChurn), color: 'var(--neg)', hint: 'avg / month', tip: 'The share of customers who cancel each month, on average. Lower is better.' },
-    { label: 'Revenue churn', value: pct1(revChurn), color: revChurn < 0 ? 'var(--pos)' : 'var(--neg)', hint: 'avg / month', tip: 'The share of monthly revenue lost to cancellations each month, on average. Lower is better.' },
+    { label: t('dash.nrr'), value: pct1(nrr), color: nrr >= 1 ? 'var(--pos)' : 'var(--neg)', hint: nrr >= 1 ? t('dash.expanding') : t('dash.contracting'), tip: t('dash.nrrTip') },
+    { label: t('dash.quick'), value: quick === null ? '∞' : quick.toFixed(1), color: quick === null || quick >= 4 ? 'var(--pos)' : 'var(--text)', hint: t('dash.quickHint'), tip: t('dash.quickTip') },
+    { label: t('dash.arpu'), value: usd(arpu), color: 'var(--text)', hint: t('dash.arpuHint'), tip: t('dash.arpuTip') },
+    { label: t('dash.ltv'), value: usd(ltv), color: 'var(--text)', hint: t('dash.ltvHint'), tip: t('dash.ltvTip') },
+    { label: t('dash.custChurn'), value: pct1(custChurn), color: 'var(--neg)', hint: t('dash.perMonth'), tip: t('dash.custChurnTip') },
+    { label: t('dash.revChurn'), value: pct1(revChurn), color: revChurn < 0 ? 'var(--pos)' : 'var(--neg)', hint: t('dash.perMonth'), tip: t('dash.revChurnTip') },
   ]
 
   // MRR movements
   const m = { newM, expM, conM, chuM }
   const bmax = Math.max(newM, expM, conM, chuM) || 1
   const bridge = [
-    { label: 'New customers', v: newM, color: 'var(--pos)', sign: '+' },
-    { label: 'Upgrades', v: expM, color: 'var(--pos)', sign: '+' },
-    { label: 'Downgrades', v: conM, color: 'var(--neg)', sign: '−' },
-    { label: 'Cancellations', v: chuM, color: 'var(--neg)', sign: '−' },
+    { label: t('dash.newCustomers'), v: newM, color: 'var(--pos)', sign: '+' },
+    { label: t('dash.upgrades'), v: expM, color: 'var(--pos)', sign: '+' },
+    { label: t('dash.downgrades'), v: conM, color: 'var(--neg)', sign: '−' },
+    { label: t('dash.cancellations'), v: chuM, color: 'var(--neg)', sign: '−' },
   ]
   const legend = [
-    { label: 'New customers', color: 'var(--pos)', valStr: '+' + usd(newM) },
-    { label: 'Upgrades', color: 'var(--pos)', valStr: '+' + usd(expM) },
-    { label: 'Downgrades', color: 'var(--neg)', valStr: '−' + usd(conM) },
-    { label: 'Cancellations', color: 'var(--neg)', valStr: '−' + usd(chuM) },
+    { label: t('dash.newCustomers'), color: 'var(--pos)', valStr: '+' + usd(newM) },
+    { label: t('dash.upgrades'), color: 'var(--pos)', valStr: '+' + usd(expM) },
+    { label: t('dash.downgrades'), color: 'var(--neg)', valStr: '−' + usd(conM) },
+    { label: t('dash.cancellations'), color: 'var(--neg)', valStr: '−' + usd(chuM) },
   ]
 
   // layout variation order
@@ -86,17 +86,56 @@ export default function Dashboard() {
   const dord = analyst ? { kpis: 1, stats: 2, mov: 3, charts: 4, cohort: 5 } : { kpis: 1, charts: 2, mov: 3, stats: 4, cohort: 5 }
 
   const last = T.mrr.length - 1
-  const trendGrowth = '+' + usd(T.mrr[last] - T.mrr[Math.max(0, last - 12)]) + ' / yr'
-  const custGrowth = '+' + (T.activeCustomers[last] - T.activeCustomers[Math.max(0, last - 12)]) + ' / yr'
+  const trendGrowth = '+' + usd(T.mrr[last] - T.mrr[Math.max(0, last - 12)]) + ' ' + t('dash.perYear')
+  const custGrowth = '+' + (T.activeCustomers[last] - T.activeCustomers[Math.max(0, last - 12)]) + ' ' + t('dash.perYear')
+
+  // Fresh tenant with no data yet → a friendly onboarding nudge on top.
+  const isEmpty = endActive === 0 && metrics.stats.churnedTotal === 0 && endMRR === 0
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      {isEmpty && (
+        <div
+          data-enter
+          style={{
+            order: 0,
+            background: 'linear-gradient(135deg,var(--accent-weak),var(--surface) 60%)',
+            border: '1px solid var(--border,#ececef)',
+            borderRadius: '18px',
+            padding: '24px 26px',
+            boxShadow: 'var(--shadow)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '16px',
+          }}
+        >
+          <div style={{ minWidth: '260px', flex: 1 }}>
+            <div style={{ fontSize: '19px', fontWeight: 650, letterSpacing: '-0.015em', color: 'var(--text,#15151b)' }}>
+              {t('onboarding.welcome', { name: (user?.name || '').split(' ')[0] })}
+            </div>
+            <div style={{ fontSize: '13px', lineHeight: 1.55, color: 'var(--text-2,#6b6b78)', marginTop: '6px', maxWidth: '560px', textWrap: 'pretty' }}>
+              {t('onboarding.body', { company: companyName })}
+            </div>
+          </div>
+          <button
+            onClick={openNewSub}
+            style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '11px 18px', borderRadius: '11px', border: 'none', background: 'var(--accent,#6E56CF)', color: '#fff', fontSize: '13px', fontWeight: 550, cursor: 'pointer', boxShadow: '0 1px 2px rgba(110,86,207,0.3)', whiteSpace: 'nowrap' }}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            {t('newSub')}
+          </button>
+        </div>
+      )}
       <div data-enter style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '10px', order: 0 }}>
-        <span style={{ fontSize: '11.5px', color: 'var(--text-3,#9a9aa6)', fontWeight: 500 }}>Layout</span>
+        <span style={{ fontSize: '11.5px', color: 'var(--text-3,#9a9aa6)', fontWeight: 500 }}>{t('dash.layout')}</span>
         <SegToggle
           options={[
-            ['spacious', 'Revenue-first'],
-            ['analyst', 'Metrics-first'],
+            ['spacious', t('dash.revenueFirst')],
+            ['analyst', t('dash.metricsFirst')],
           ]}
           value={dashLayout}
           onChange={setDashLayout}
@@ -113,18 +152,18 @@ export default function Dashboard() {
       {/* CHARTS ROW */}
       <div data-enter style={{ order: dord.charts, display: 'grid', gridTemplateColumns: analyst ? '1fr 1fr' : '1.6fr 1fr', gap: '16px' }}>
         <ChartCard
-          title="Monthly recurring revenue"
-          tip="Your total monthly recurring revenue over the last 18 months. The shaded band marks the period you picked at the top."
-          subtitle="Last 18 months · selected period shaded"
+          title={t('dash.trendTitle')}
+          tip={t('dash.trendTip')}
+          subtitle={t('dash.trendSubtitle')}
           endLabel={usd(endMRR)}
           growthLabel={trendGrowth}
         >
           <MrrTrendChart />
         </ChartCard>
         <ChartCard
-          title="Active customers"
-          tip="How many paying customers you had at the end of each month, after subtracting anyone who cancelled."
-          subtitle="Net of churn"
+          title={t('dash.activeTitle')}
+          tip={t('dash.activeChartTip')}
+          subtitle={t('dash.netOfChurn')}
           endLabel={String(T.activeCustomers[last])}
           growthLabel={custGrowth}
         >
@@ -137,16 +176,16 @@ export default function Dashboard() {
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '18px' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', fontSize: '13.5px', fontWeight: 600, color: 'var(--text,#15151b)' }}>
-              MRR movements
-              <InfoTip text="Where your monthly revenue grew and shrank this period. Green bars add revenue (new customers, upgrades); red bars remove it (downgrades, cancellations)." />
+              {t('dash.movements')}
+              <InfoTip text={t('dash.movementsTip')} />
             </div>
-            <div style={{ fontSize: '11.5px', color: 'var(--text-3,#9a9aa6)', marginTop: '2px' }}>How recurring revenue changed over {periodLabel(period)}</div>
+            <div style={{ fontSize: '11.5px', color: 'var(--text-3,#9a9aa6)', marginTop: '2px' }}>{t('dash.movementsSubtitle', { period: periodIn })}</div>
           </div>
           <SegToggle
             options={[
-              ['bars', 'Chart'],
-              ['flow', 'Flow'],
-              ['bridge', 'Breakdown'],
+              ['bars', t('dash.chart')],
+              ['flow', t('dash.flow')],
+              ['bridge', t('dash.breakdown')],
             ]}
             value={movementViz}
             onChange={setMovementViz}
@@ -173,7 +212,7 @@ export default function Dashboard() {
           </div>
 
           <div style={{ borderLeft: '1px solid var(--border,#ececef)', paddingLeft: '26px' }}>
-            <div style={{ fontSize: '12px', color: 'var(--text-2,#6b6b78)', fontWeight: 500 }}>Net MRR change</div>
+            <div style={{ fontSize: '12px', color: 'var(--text-2,#6b6b78)', fontWeight: 500 }}>{t('dash.netChange')}</div>
             <div style={{ fontSize: '30px', fontWeight: 650, letterSpacing: '-0.02em', marginTop: '6px', color: net >= 0 ? 'var(--pos)' : 'var(--neg)', fontVariantNumeric: 'tabular-nums' }}>
               {(net >= 0 ? '+' : '') + usd(net)}
             </div>
