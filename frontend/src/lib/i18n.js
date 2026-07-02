@@ -37,6 +37,20 @@ const DICT = {
       createAccount: 'Account aanmaken', creating: 'Account aanmaken…',
       toRegister: 'Nog geen account? Registreer je bedrijf', toLogin: 'Al een account? Log in',
     },
+    import: {
+      button: 'CSV importeren', title: 'Klanten importeren uit CSV',
+      intro: 'Upload een CSV met de kolommen name en plan (verplicht) en optioneel email, country, started_at, status en canceled_at. Plannen mag je op naam of slug noemen; komma- én puntkomma-gescheiden bestanden werken. Historische startdatums vullen meteen je grafieken.',
+      template: 'Download voorbeeldbestand', choose: 'Kies een CSV-bestand',
+      run: 'Importeren', success: '{n} klanten geïmporteerd ✓',
+      failed: 'Er is niets geïmporteerd — los eerst deze rijen op:',
+      row: 'Rij {n}',
+      reasons: {
+        unknown_plan: 'onbekend plan', duplicate_email: 'e-mailadres bestaat al',
+        invalid_email: 'ongeldig e-mailadres', invalid_date: 'ongeldige datum',
+        name_required: 'naam ontbreekt', missing_columns: 'kolommen “name” en “plan” zijn verplicht',
+        empty_file: 'leeg bestand', too_many_rows: 'te veel rijen (max 2000)',
+      },
+    },
     demo: {
       tryIt: 'Bekijk eerst de demo met voorbeelddata',
       banner: 'Je bekijkt de demo met voorbeelddata — kijk gerust rond, er kan niets stuk.',
@@ -181,6 +195,20 @@ const DICT = {
       name: 'Your name', company: 'Company name',
       createAccount: 'Create account', creating: 'Creating account…',
       toRegister: 'No account yet? Register your company', toLogin: 'Already have an account? Sign in',
+    },
+    import: {
+      button: 'Import CSV', title: 'Import customers from CSV',
+      intro: 'Upload a CSV with the columns name and plan (required) and optionally email, country, started_at, status and canceled_at. Plans can be referenced by name or slug; both comma and semicolon separated files work. Historical start dates light up your charts immediately.',
+      template: 'Download sample file', choose: 'Choose a CSV file',
+      run: 'Import', success: '{n} customers imported ✓',
+      failed: 'Nothing was imported — fix these rows first:',
+      row: 'Row {n}',
+      reasons: {
+        unknown_plan: 'unknown plan', duplicate_email: 'email already exists',
+        invalid_email: 'invalid email address', invalid_date: 'invalid date',
+        name_required: 'name is missing', missing_columns: 'columns “name” and “plan” are required',
+        empty_file: 'empty file', too_many_rows: 'too many rows (max 2000)',
+      },
     },
     demo: {
       tryIt: 'Explore the demo with sample data first',

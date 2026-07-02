@@ -55,4 +55,24 @@ export const api = {
   patch: (path, body) => request('PATCH', path, body),
   put: (path, body) => request('PUT', path, body),
   del: (path) => request('DELETE', path),
+
+  /** Multipart upload (the browser sets the boundary). Returns parsed JSON. */
+  async upload(path, formData) {
+    const res = await fetch(BASE + path, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        ...(getToken() ? { Authorization: 'Bearer ' + getToken() } : {}),
+      },
+      body: formData,
+    })
+    const json = await res.json().catch(() => null)
+    if (!res.ok) {
+      if (res.status === 401) clearToken()
+      const err = new ApiError(res.status, json?.message || 'Upload failed (' + res.status + ')', json?.errors)
+      err.rows = json?.rows // per-row import errors
+      throw err
+    }
+    return json
+  },
 }
