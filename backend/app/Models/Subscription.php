@@ -4,12 +4,15 @@ namespace App\Models;
 
 use App\Enums\PlanInterval;
 use App\Enums\SubscriptionStatus;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Subscription extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'customer_id', 'plan_id', 'status', 'billing_interval',
         'started_at', 'canceled_at',
