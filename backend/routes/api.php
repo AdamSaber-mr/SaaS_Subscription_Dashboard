@@ -23,6 +23,9 @@ use Illuminate\Support\Facades\Route;
 Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:10,1');
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:30,1');
 
+// Crash reports from the SPA's error boundary (public: crashes can happen pre-login)
+Route::post('/client-errors', [\App\Http\Controllers\Api\ClientErrorController::class, 'store'])->middleware('throttle:10,1');
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', [AuthController::class, 'user']);
@@ -32,8 +35,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/settings/password', [SettingsController::class, 'updatePassword']);
     Route::patch('/settings/team', [SettingsController::class, 'updateTeam']);
 
-    // Reference & metrics
+    // Plans (per-team tiers)
     Route::get('/plans', [PlanController::class, 'index']);
+    Route::post('/plans', [PlanController::class, 'store']);
+    Route::patch('/plans/{plan}', [PlanController::class, 'update']);
+    Route::delete('/plans/{plan}', [PlanController::class, 'destroy']);
+
+    // Metrics
     Route::get('/metrics', [MetricsController::class, 'index']);
 
     // Customers

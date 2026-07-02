@@ -13,6 +13,7 @@ class PlanResource extends JsonResource
     {
         return [
             'id' => $this->slug,
+            'planId' => $this->id, // numeric id, needed for plan management
             'name' => $this->name,
             'blurb' => $this->blurb,
             'price' => $this->price_cents / 100,
