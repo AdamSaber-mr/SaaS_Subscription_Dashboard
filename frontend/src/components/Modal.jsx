@@ -5,7 +5,7 @@ import { COUNTRIES } from '../lib/countries.js'
 
 // Accessible dialog shell: focus moves in on open, is trapped while open
 // (Tab cycles), Escape closes, and focus returns to the opener on close.
-function DialogShell({ onClose, children }) {
+export function DialogShell({ onClose, children }) {
   const boxRef = useRef(null)
 
   useEffect(() => {

@@ -138,11 +138,11 @@ export function DashboardProvider({ children }) {
     setError(err.message)
   }, [])
 
-  // Plans — once per session.
+  // Plans — refetched after any mutation (plan management lives on /plans).
   useEffect(() => {
     if (!user) return
     api.get('/plans').then((res) => setPlans(res.data)).catch(fail)
-  }, [user, fail])
+  }, [user, refreshKey, fail])
 
   // Metrics — per selected period; previous payload stays visible while loading.
   useEffect(() => {
@@ -278,7 +278,7 @@ export function DashboardProvider({ children }) {
       user, authChecking, login, register, logout, updateUser: setUser,
       // data
       plans, planMap, planRamp, maxPlanMrr, metrics, customerList, customerDetail,
-      subscriptionList, booted, error, setError, actionBusy,
+      subscriptionList, booted, error, setError, actionBusy, refresh,
       accent, companyName,
       // i18n
       lang, setLang, t,
