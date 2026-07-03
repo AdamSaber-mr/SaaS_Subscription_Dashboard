@@ -10,9 +10,6 @@ export default function Topbar() {
   return (
     <header
       style={{
-        position: 'sticky',
-        top: 0,
-        zIndex: 20,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',

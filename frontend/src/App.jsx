@@ -79,36 +79,35 @@ export default function App() {
           />
         )}
         <main style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-          {user?.is_demo && (
-            <div
-              style={{
-                position: 'sticky',
-                top: 0,
-                zIndex: 85,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexWrap: 'wrap',
-                gap: '8px 14px',
-                padding: '9px 14px',
-                background: 'var(--accent,#6E56CF)',
-                color: '#fff',
-                fontSize: '12.5px',
-                fontWeight: 500,
-                textAlign: 'center',
-                boxShadow: '0 2px 10px rgba(8,8,12,0.18)',
-              }}
-            >
-              <span>{t('demo.banner')}</span>
-              <button
-                onClick={leaveDemoAndRegister}
-                style={{ padding: '5px 12px', borderRadius: '8px', border: 'none', background: '#fff', color: 'var(--accent,#6E56CF)', fontSize: '12px', fontWeight: 650, cursor: 'pointer', whiteSpace: 'nowrap' }}
+          {/* banner + page header stick together, so the header never slides under the banner */}
+          <div style={{ position: 'sticky', top: 0, zIndex: 85 }}>
+            {user?.is_demo && (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexWrap: 'wrap',
+                  gap: '8px 14px',
+                  padding: '9px 14px',
+                  background: 'var(--accent,#6E56CF)',
+                  color: '#fff',
+                  fontSize: '12.5px',
+                  fontWeight: 500,
+                  textAlign: 'center',
+                }}
               >
-                {t('demo.bannerCta')} →
-              </button>
-            </div>
-          )}
-          <Topbar />
+                <span>{t('demo.banner')}</span>
+                <button
+                  onClick={leaveDemoAndRegister}
+                  style={{ padding: '5px 12px', borderRadius: '8px', border: 'none', background: '#fff', color: 'var(--accent,#6E56CF)', fontSize: '12px', fontWeight: 650, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                >
+                  {t('demo.bannerCta')} →
+                </button>
+              </div>
+            )}
+            <Topbar />
+          </div>
           {/* keyed by path so entrance animations replay on navigation */}
           <div key={location.pathname} style={{ flex: 1, padding: isMobile ? '16px 14px 48px' : '26px 30px 60px' }}>
             <Routes>
